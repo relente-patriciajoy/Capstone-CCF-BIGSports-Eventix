@@ -10,6 +10,19 @@ $user_id = $_SESSION['user_id'];
 $message = "";
 $error = "";
 
+// Fetch user's role from database
+$role_stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ?");
+$role_stmt->bind_param("i", $user_id);
+$role_stmt->execute();
+$role_stmt->bind_result($role);
+$role_stmt->fetch();
+$role_stmt->close();
+
+// Fallback if role not found
+if (empty($role)) {
+    $role = 'user'; // default role
+}
+
 // Handle add event
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
     // Check if user has permission to create events

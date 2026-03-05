@@ -9,6 +9,19 @@ require_once('../../includes/permission_functions.php');
 $user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['role_name'];
 
+// Fetch user's role from database
+$role_stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ?");
+$role_stmt->bind_param("i", $user_id);
+$role_stmt->execute();
+$role_stmt->bind_result($role);
+$role_stmt->fetch();
+$role_stmt->close();
+
+// Fallback if role not found
+if (empty($role)) {
+    $role = 'user'; // default role
+}
+
 // CHECK PERMISSION - Must have reports permission
 if (!hasPermission($conn, $user_id, 'system.reports') && !hasPermission($conn, $user_id, 'attendance.export')) {
     die('
