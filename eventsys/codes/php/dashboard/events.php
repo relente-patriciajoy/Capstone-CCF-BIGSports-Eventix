@@ -6,8 +6,6 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
-// No requireRole() = all logged-in users
-
 include('../../includes/db.php');
 
 $user_id = $_SESSION['user_id'];
@@ -53,6 +51,7 @@ $result = $conn->query($query);
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
 <!-- Sidebar -->
 <?php include('../components/sidebar.php'); ?>
@@ -83,19 +82,38 @@ $result = $conn->query($query);
     ?>
 
     <section class="grid-section">
-        <?php while ($row = $result->fetch_assoc()): ?>
-            <div class="card">
+        <?php while ($row = $result->fetch_assoc()):
+            $event_ended = strtotime($row['end_time']) < time();
+        ?>
+            <div class="card <?= $event_ended ? 'event-closed' : '' ?>">
                 <h3><?= htmlspecialchars($row['title']) ?></h3>
+
+                <?php if ($event_ended): ?>
+                    <span class="event-closed-badge">
+                        <i data-lucide="lock" style="width: 12px; height: 12px;"></i>
+                        Registration Closed
+                    </span>
+                <?php endif; ?>
+
                 <p><strong>Venue:</strong> <?= htmlspecialchars($row['venue']) ?></p>
                 <p><strong>Date:</strong> <?= $row['start_time'] ?> – <?= $row['end_time'] ?></p>
                 <p><strong>Price:</strong> $<?= number_format($row['price'], 2) ?></p>
                 <p><strong>Available:</strong> <?= htmlspecialchars($row['available_seats'])?> seats</p>
                 <p><?= nl2br(htmlspecialchars($row['description'])) ?></p>
-                <form method="POST" action="../event/event_register.php">
-                    <input type="hidden" name="capacity" value="<?= $row['capacity'] ?>">
-                    <input type="hidden" name="event_id" value="<?= $row['event_id'] ?>">
-                    <button type="submit">Register</button>
-                </form>
+
+                <?php if ($event_ended): ?>
+                    <!-- Greyed-out non-clickable button for past events -->
+                    <button class="btn-register-closed" disabled title="This event has already ended">
+                        <i data-lucide="lock" style="width: 15px; height: 15px;"></i>
+                        Registration Closed
+                    </button>
+                <?php else: ?>
+                    <form method="POST" action="../event/event_register.php">
+                        <input type="hidden" name="capacity" value="<?= $row['capacity'] ?>">
+                        <input type="hidden" name="event_id" value="<?= $row['event_id'] ?>">
+                        <button type="submit">Register</button>
+                    </form>
+                <?php endif; ?>
             </div>
         <?php endwhile; ?>
     </section>

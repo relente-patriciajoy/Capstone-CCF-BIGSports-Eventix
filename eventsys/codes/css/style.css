@@ -767,6 +767,39 @@ a:hover {
   color: var(--dark-maroon);
 }
 
+/* Closed event card styling */
+.card.event-closed {
+  opacity: 0.75;
+}
+
+.event-closed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.btn-register-closed {
+  width: 100%;
+  padding: 10px;
+  background: #d1d5db;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* Responsive Styles */
 @media (max-width: 1024px) {
   .grid-section {
