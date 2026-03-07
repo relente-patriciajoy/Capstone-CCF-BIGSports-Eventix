@@ -19,13 +19,29 @@ $stmt->bind_result($role);
 $stmt->fetch();
 $stmt->close();
 
+// AUTO-CLOSE MISSED CHECKOUTS ON PAGE LOAD
+$auto_close = $conn->prepare("
+    UPDATE attendance a
+    JOIN registration r ON a.registration_id = r.registration_id
+    JOIN event e ON r.event_id = e.event_id
+    SET a.check_out_time = e.end_time,
+        a.notes = 'Left without checking out'
+    WHERE r.user_id = ?
+      AND a.check_in_time IS NOT NULL
+      AND a.check_out_time IS NULL
+      AND e.end_time < NOW()
+      AND (a.notes IS NULL OR a.notes != 'Left without checking out')
+");
+$auto_close->bind_param("i", $user_id);
+$auto_close->execute();
+$auto_close->close();
+// -------------------------------------------------------
+
 // Handle check-in
 if (isset($_POST['check_in'])) {
     $registration_id = $_POST['registration_id'];
 
-    // -------------------------------------------------------
-    // BLOCK CHECK-IN IF EVENT HAS ENDED AND USER WAS ABSENT
-    // -------------------------------------------------------
+    // Block check-in if event ended AND user was absent
     $guard = $conn->prepare("
         SELECT e.end_time, a.check_in_time
         FROM registration r
@@ -39,13 +55,11 @@ if (isset($_POST['check_in'])) {
     $guard->fetch();
     $guard->close();
 
-    // If event has ended AND user never checked in while event was live → block
     if (strtotime($end_time) < time() && !$existing_check_in) {
         $_SESSION['attendance_error'] = "Check-in is no longer allowed. This event has already ended and you were marked absent.";
         header("Location: attendance.php");
         exit();
     }
-    // -------------------------------------------------------
 
     $stmt = $conn->prepare("INSERT INTO attendance (registration_id, check_in_time, status) 
                             VALUES (?, NOW(), 'present') 
@@ -59,30 +73,24 @@ if (isset($_POST['check_in'])) {
 if (isset($_POST['check_out'])) {
     $registration_id = $_POST['registration_id'];
 
-    // -------------------------------------------------------
-    // BLOCK CHECK-OUT IF EVENT HAS ENDED AND USER NEVER CHECKED IN
-    // (Prevents a user who was absent from faking a check-out)
-    // -------------------------------------------------------
+    // Block check-out if event has already ended
     $guard = $conn->prepare("
-        SELECT e.end_time, a.check_in_time
+        SELECT e.end_time
         FROM registration r
         JOIN event e ON r.event_id = e.event_id
-        LEFT JOIN attendance a ON r.registration_id = a.registration_id
         WHERE r.registration_id = ?
     ");
     $guard->bind_param("i", $registration_id);
     $guard->execute();
-    $guard->bind_result($end_time, $existing_check_in);
+    $guard->bind_result($end_time);
     $guard->fetch();
     $guard->close();
 
-    // Block check-out if event ended and they never actually checked in
-    if (strtotime($end_time) < time() && !$existing_check_in) {
-        $_SESSION['attendance_error'] = "Check-out is not allowed. This event has already ended and you were marked absent.";
+    if (strtotime($end_time) < time()) {
+        $_SESSION['attendance_error'] = "Check-out is no longer allowed. This event has already ended — your attendance has been automatically recorded as present.";
         header("Location: attendance.php");
         exit();
     }
-    // -------------------------------------------------------
 
     $stmt = $conn->prepare("UPDATE attendance SET check_out_time = NOW() WHERE registration_id = ?");
     $stmt->bind_param("i", $registration_id);
@@ -93,7 +101,7 @@ if (isset($_POST['check_out'])) {
 // Get all registrations with event and attendance info
 $query = "
 SELECT r.registration_id, e.title, e.start_time, e.end_time,
-       a.check_in_time, a.check_out_time, a.status
+       a.check_in_time, a.check_out_time, a.status, a.notes
 FROM registration r
 JOIN event e ON r.event_id = e.event_id
 LEFT JOIN attendance a ON r.registration_id = a.registration_id
@@ -121,7 +129,6 @@ $result = $stmt->get_result();
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
-<!-- Sidebar -->
 <?php include('../components/sidebar.php'); ?>
 
 <main class="main-content">
@@ -162,9 +169,10 @@ $result = $stmt->get_result();
     <section class="grid-section">
         <?php if ($result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()):
-                $event_ended = strtotime($row['end_time']) < time();
-                $was_absent  = empty($row['check_in_time']);
-                // Lock check-in/out only when event ended AND user never checked in
+                $event_ended     = strtotime($row['end_time']) < time();
+                $was_absent      = empty($row['check_in_time']);
+                $missed_checkout = ($row['notes'] === 'Left without checking out');
+                // Fully locked: event ended and user never checked in at all
                 $locked = $event_ended && $was_absent;
             ?>
                 <div class="card">
@@ -174,14 +182,26 @@ $result = $stmt->get_result();
                     <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ?? 'Not yet' ?></p>
                     <p><strong>Status:</strong> <?= $row['status'] ?? 'absent' ?></p>
 
-                    <?php if ($locked): ?>
-                        <!-- Event ended, user was absent — show locked notice -->
-                        <p style="color: #b91c1c; font-size: 0.88rem; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                    <?php if ($missed_checkout): ?>
+                        <!-- Checked in but never checked out — auto-closed -->
+                        <p style="color: #92400e; font-size: 0.88rem; margin-top: 8px;
+                                  background: #fff3cd; border-left: 3px solid #f59e0b;
+                                  padding: 8px 10px; border-radius: 4px;
+                                  display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="alert-triangle" style="width: 15px; height: 15px; flex-shrink: 0;"></i>
+                            <em>Left without checking out — marked <strong>present</strong></em>
+                        </p>
+
+                    <?php elseif ($locked): ?>
+                        <!-- Event ended, user was absent — fully locked -->
+                        <p style="color: #b91c1c; font-size: 0.88rem; margin-top: 8px;
+                                  display: flex; align-items: center; gap: 6px;">
                             <i data-lucide="lock" style="width: 15px; height: 15px;"></i>
-                            <em>Event ended &mdash; attendance locked (absent)</em>
+                            <em>Event ended — attendance locked (absent)</em>
                         </p>
 
                     <?php elseif (!$row['check_in_time']): ?>
+                        <!-- Not checked in yet, event still active -->
                         <form method="post">
                             <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
                             <button type="submit" name="check_in">
@@ -190,7 +210,8 @@ $result = $stmt->get_result();
                             </button>
                         </form>
 
-                    <?php elseif ($row['check_in_time'] && !$row['check_out_time']): ?>
+                    <?php elseif ($row['check_in_time'] && !$row['check_out_time'] && !$event_ended): ?>
+                        <!-- Checked in, event still live → allow checkout -->
                         <form method="post">
                             <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
                             <button type="submit" name="check_out">
@@ -200,6 +221,7 @@ $result = $stmt->get_result();
                         </form>
 
                     <?php else: ?>
+                        <!-- Properly checked in and out -->
                         <p style="color: #059669; font-weight: 600;">
                             <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle;"></i>
                             <em>Attendance complete</em>
@@ -218,17 +240,17 @@ $result = $stmt->get_result();
         <?php endif; ?>
     </section>
 </main>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   lucide.createIcons();
 
-  // Auto-hide attendance error alert
-  const alert = document.getElementById('attendance-alert');
-  if (alert) {
+  const alertBox = document.getElementById('attendance-alert');
+  if (alertBox) {
     setTimeout(() => {
-      alert.style.opacity = '0';
-      alert.style.transition = 'opacity 0.5s';
-      setTimeout(() => alert.remove(), 500);
+      alertBox.style.opacity = '0';
+      alertBox.style.transition = 'opacity 0.5s';
+      setTimeout(() => alertBox.remove(), 500);
     }, 4000);
   }
 </script>
