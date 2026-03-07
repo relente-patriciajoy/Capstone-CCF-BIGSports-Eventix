@@ -14,6 +14,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
     $event_id = $_POST['event_id'];
     $maxCapacity = $_POST['capacity'] ?? 0;
 
+    // -------------------------------------------------------
+    // BLOCK REGISTRATION IF EVENT HAS ALREADY ENDED
+    // -------------------------------------------------------
+    $event_check = $conn->prepare("SELECT end_time FROM event WHERE event_id = ?");
+    $event_check->bind_param("i", $event_id);
+    $event_check->execute();
+    $event_check->bind_result($end_time);
+    $event_check->fetch();
+    $event_check->close();
+
+    if (!$end_time) {
+        $_SESSION['register_status'] = "Event not found.";
+        header("Location: ../dashboard/events.php");
+        exit();
+    }
+
+    if (strtotime($end_time) < time()) {
+        $_SESSION['register_status'] = "Registration is closed. This event has already ended.";
+        header("Location: ../dashboard/events.php");
+        exit();
+    }
+    // -------------------------------------------------------
+
     function assignTableNumber($conn, $maxCapacity) {
         $maxAttempts = $maxCapacity;
         $attempts = 0;
