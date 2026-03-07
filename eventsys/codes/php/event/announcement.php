@@ -11,9 +11,9 @@ include('../../includes/db.php');
 require_once('../../includes/permission_functions.php');
 require_once('../../includes/notification_function.php');
 
-$user_id   = $_SESSION['user_id'];
-$message   = "";
-$error     = "";
+$user_id     = $_SESSION['user_id'];
+$message     = "";
+$error       = "";
 $send_result = null;
 
 // Fetch role for sidebar
@@ -24,7 +24,7 @@ $role_stmt->bind_result($role);
 $role_stmt->fetch();
 $role_stmt->close();
 
-// Get user email to find their events
+// Get user email and full name
 $email_stmt = $conn->prepare("SELECT email, CONCAT(first_name,' ',last_name) AS full_name FROM user WHERE user_id = ?");
 $email_stmt->bind_param("i", $user_id);
 $email_stmt->execute();
@@ -40,22 +40,44 @@ $org_stmt->bind_result($organizer_id);
 $org_stmt->fetch();
 $org_stmt->close();
 
-// Fetch events this user manages (with registered participant count)
-$events_stmt = $conn->prepare("
+// -------------------------------------------------------
+// REMINDERS — upcoming events only (end_time in the future)
+// -------------------------------------------------------
+$reminder_events_stmt = $conn->prepare("
     SELECT e.event_id, e.title, e.start_time, e.end_time,
            COUNT(r.registration_id) AS participant_count
     FROM event e
     LEFT JOIN organizer o ON e.organizer_id = o.organizer_id
     LEFT JOIN event_access ea ON e.event_id = ea.event_id AND ea.user_id = ?
     LEFT JOIN registration r ON e.event_id = r.event_id AND r.status = 'confirmed'
-    WHERE o.contact_email = ? OR ea.can_manage_attendance = 1
+    WHERE (o.contact_email = ? OR ea.can_manage_attendance = 1)
+      AND e.end_time > NOW()
+    GROUP BY e.event_id
+    ORDER BY e.start_time ASC
+");
+$reminder_events_stmt->bind_param("is", $user_id, $user_email);
+$reminder_events_stmt->execute();
+$reminder_events = $reminder_events_stmt->get_result();
+$reminder_events_stmt->close();
+
+// -------------------------------------------------------
+// ANNOUNCEMENTS — all events (past and upcoming)
+// -------------------------------------------------------
+$announcement_events_stmt = $conn->prepare("
+    SELECT e.event_id, e.title, e.start_time, e.end_time,
+           COUNT(r.registration_id) AS participant_count
+    FROM event e
+    LEFT JOIN organizer o ON e.organizer_id = o.organizer_id
+    LEFT JOIN event_access ea ON e.event_id = ea.event_id AND ea.user_id = ?
+    LEFT JOIN registration r ON e.event_id = r.event_id AND r.status = 'confirmed'
+    WHERE (o.contact_email = ? OR ea.can_manage_attendance = 1)
     GROUP BY e.event_id
     ORDER BY e.start_time DESC
 ");
-$events_stmt->bind_param("is", $user_id, $user_email);
-$events_stmt->execute();
-$my_events = $events_stmt->get_result();
-$events_stmt->close();
+$announcement_events_stmt->bind_param("is", $user_id, $user_email);
+$announcement_events_stmt->execute();
+$announcement_events = $announcement_events_stmt->get_result();
+$announcement_events_stmt->close();
 
 // -------------------------------------------------------
 // HANDLE SEND REMINDERS
@@ -91,8 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_reminders'])) {
 // HANDLE SEND ANNOUNCEMENT
 // -------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_announcement'])) {
-    $event_id       = (int)$_POST['event_id'];
-    $subject_text   = trim($_POST['subject'] ?? '');
+    $event_id         = (int)$_POST['event_id'];
+    $subject_text     = trim($_POST['subject'] ?? '');
     $announcement_msg = trim($_POST['announcement_message'] ?? '');
 
     if (empty($subject_text)) {
@@ -110,17 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_announcement']))
     }
 }
 
-// Fetch past announcements for this user's events
+// Fetch announcement history
 $history_stmt = $conn->prepare("
     SELECT a.announcement_id, a.subject, a.message, a.sent_at,
            e.title AS event_title,
-           CONCAT(u.first_name,' ',u.last_name) AS sender_name,
-           (SELECT COUNT(*) FROM email_log el
-            JOIN registration r ON el.registration_id = r.registration_id
-            WHERE r.event_id = a.event_id AND el.email_type = 'announcement'
-              AND el.sent_at >= a.sent_at
-              AND el.sent_at <= DATE_ADD(a.sent_at, INTERVAL 10 MINUTE)
-           ) AS recipients
+           CONCAT(u.first_name,' ',u.last_name) AS sender_name
     FROM announcement a
     JOIN event e ON a.event_id = e.event_id
     JOIN user u ON a.sent_by = u.user_id
@@ -148,6 +164,7 @@ $history_stmt->close();
     <style>
         .notif-container { max-width: 900px; margin: 0 auto; padding: 0 24px 40px; }
 
+        /* ── Tab bar ── */
         .tab-bar {
             display: flex;
             gap: 0;
@@ -157,34 +174,47 @@ $history_stmt->close();
             margin-bottom: 28px;
         }
 
-        .tab-btn {
+        /* Override event_head.css global button styles for tab buttons */
+        .tab-bar .tab-btn {
             flex: 1;
-            padding: 10px 16px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            font-family: Poppins, sans-serif;
-            font-size: 0.92rem;
-            font-weight: 500;
-            color: #6b7280;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
+            padding: 10px 16px !important;
+            border: none !important;
+            background: transparent !important;
+            border-radius: 8px !important;
+            font-family: Poppins, sans-serif !important;
+            font-size: 0.92rem !important;
+            font-weight: 500 !important;
+            color: #6b7280 !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 7px !important;
+            box-shadow: none !important;
+            transform: none !important;
+            width: auto !important;
+            margin: 0 !important;
         }
 
-        .tab-btn.active {
-            background: white;
-            color: #8b0000;
-            font-weight: 600;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        .tab-bar .tab-btn:hover {
+            background: rgba(139, 0, 0, 0.08) !important;
+            color: #8b0000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .tab-bar .tab-btn.active {
+            background: white !important;
+            color: #8b0000 !important;
+            font-weight: 600 !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important;
         }
 
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
+        /* ── Form card ── */
         .form-card {
             background: white;
             border-radius: 14px;
@@ -237,6 +267,7 @@ $history_stmt->close();
 
         .form-group textarea { resize: vertical; min-height: 120px; }
 
+        /* ── Reminder option cards ── */
         .reminder-options {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -244,9 +275,7 @@ $history_stmt->close();
             margin-top: 4px;
         }
 
-        .reminder-option {
-            position: relative;
-        }
+        .reminder-option { position: relative; }
 
         .reminder-option input[type="radio"] {
             position: absolute;
@@ -271,10 +300,7 @@ $history_stmt->close();
             color: #374151 !important;
         }
 
-        .reminder-option label .icon {
-            font-size: 24px;
-            line-height: 1;
-        }
+        .reminder-option label .icon { font-size: 24px; line-height: 1; }
 
         .reminder-option label .days {
             font-size: 1.1rem;
@@ -289,37 +315,39 @@ $history_stmt->close();
             box-shadow: 0 2px 8px rgba(139,0,0,0.12);
         }
 
+        /* ── Send button ── */
         .btn-send {
-            width: 100%;
-            padding: 13px;
-            background: linear-gradient(135deg, #8b0000, #c0392b);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-family: Poppins, sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            margin-top: 8px;
+            width: 100% !important;
+            padding: 13px !important;
+            background: linear-gradient(135deg, #8b0000, #c0392b) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-family: Poppins, sans-serif !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            transition: all 0.2s !important;
+            margin-top: 16px !important;
+            box-shadow: none !important;
         }
 
         .btn-send:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(139,0,0,0.3);
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(139,0,0,0.3) !important;
         }
 
         .btn-send:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
         }
 
-        /* Participant count badge */
+        /* ── Participant badge ── */
         .participant-badge {
             display: inline-flex;
             align-items: center;
@@ -334,7 +362,7 @@ $history_stmt->close();
             border: 1px solid #bbf7d0;
         }
 
-        /* Alert */
+        /* ── Alerts ── */
         .alert {
             padding: 14px 18px;
             border-radius: 8px;
@@ -348,7 +376,7 @@ $history_stmt->close();
         .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
         .alert-info    { background: #dbeafe; color: #1e40af; border: 1px solid #60a5fa; }
 
-        /* History table */
+        /* ── History ── */
         .history-card {
             background: white;
             border-radius: 14px;
@@ -427,7 +455,7 @@ $history_stmt->close();
 
         .no-history i { margin-bottom: 12px; opacity: 0.4; }
 
-        /* Tip box */
+        /* ── Tip box ── */
         .tip-box {
             background: #fffbeb;
             border: 1px solid #fde68a;
@@ -442,6 +470,12 @@ $history_stmt->close();
         }
 
         .tip-box i { flex-shrink: 0; margin-top: 2px; }
+
+        /* ── Past event label in announcement dropdown ── */
+        .past-event-label {
+            color: #9ca3af;
+            font-style: italic;
+        }
 
         @media (max-width: 640px) {
             .reminder-options { grid-template-columns: 1fr; }
@@ -511,7 +545,7 @@ $history_stmt->close();
             </button>
         </div>
 
-        <!-- TAB: REMINDERS -->
+        <!-- ==================== TAB: REMINDERS ==================== -->
         <div id="tab-reminders" class="tab-panel active">
             <div class="form-card">
                 <h3>
@@ -522,12 +556,10 @@ $history_stmt->close();
                 <form method="POST" id="reminderForm">
                     <div class="form-group">
                         <label>Select Event</label>
-                        <select name="event_id" id="reminderEventSelect" required onchange="updateParticipantCount(this, 'reminderBadge')">
-                            <option value="">-- Choose an event --</option>
-                            <?php
-                            $my_events->data_seek(0);
-                            while ($ev = $my_events->fetch_assoc()):
-                            ?>
+                        <select name="event_id" id="reminderEventSelect" required
+                                onchange="updateParticipantCount(this, 'reminderBadge')">
+                            <option value="">-- Choose an upcoming event --</option>
+                            <?php while ($ev = $reminder_events->fetch_assoc()): ?>
                                 <option value="<?= $ev['event_id'] ?>"
                                         data-count="<?= $ev['participant_count'] ?>"
                                         data-start="<?= $ev['start_time'] ?>">
@@ -537,6 +569,12 @@ $history_stmt->close();
                                 </option>
                             <?php endwhile; ?>
                         </select>
+                        <?php if ($reminder_events->num_rows === 0): ?>
+                            <p style="color:#9ca3af;font-size:0.85rem;margin-top:8px;">
+                                <i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;"></i>
+                                No upcoming events found. Reminders can only be sent for future events.
+                            </p>
+                        <?php endif; ?>
                         <div id="reminderBadge" style="display:none;" class="participant-badge">
                             <i data-lucide="users" style="width:14px;height:14px;"></i>
                             <span id="reminderBadgeText"></span>
@@ -573,7 +611,6 @@ $history_stmt->close();
                         </div>
                     </div>
 
-                    <!-- Timing note -->
                     <div class="alert alert-info" style="margin-top:16px;margin-bottom:0;">
                         <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0;"></i>
                         <span>Each reminder type can only be sent <strong>once per participant</strong>. If a participant already received a specific reminder, they will be skipped automatically.</span>
@@ -587,7 +624,7 @@ $history_stmt->close();
             </div>
         </div>
 
-        <!-- TAB: ANNOUNCEMENTS -->
+        <!-- ==================== TAB: ANNOUNCEMENTS ==================== -->
         <div id="tab-announcements" class="tab-panel">
             <div class="form-card">
                 <h3>
@@ -598,19 +635,45 @@ $history_stmt->close();
                 <form method="POST" id="announcementForm">
                     <div class="form-group">
                         <label>Select Event</label>
-                        <select name="event_id" id="announcementEventSelect" required onchange="updateParticipantCount(this, 'announcementBadge')">
+                        <select name="event_id" id="announcementEventSelect" required
+                                onchange="updateParticipantCount(this, 'announcementBadge')">
                             <option value="">-- Choose an event --</option>
                             <?php
-                            $my_events->data_seek(0);
-                            while ($ev = $my_events->fetch_assoc()):
+                            // Separate upcoming and past into optgroups for clarity
+                            $upcoming = [];
+                            $past     = [];
+                            while ($ev = $announcement_events->fetch_assoc()) {
+                                if (strtotime($ev['end_time']) >= time()) {
+                                    $upcoming[] = $ev;
+                                } else {
+                                    $past[] = $ev;
+                                }
+                            }
                             ?>
-                                <option value="<?= $ev['event_id'] ?>"
-                                        data-count="<?= $ev['participant_count'] ?>">
-                                    <?= htmlspecialchars($ev['title']) ?>
-                                    (<?= date('M j, Y', strtotime($ev['start_time'])) ?>)
-                                    — <?= $ev['participant_count'] ?> registered
-                                </option>
-                            <?php endwhile; ?>
+                            <?php if (!empty($upcoming)): ?>
+                                <optgroup label="── Upcoming Events ──">
+                                    <?php foreach ($upcoming as $ev): ?>
+                                        <option value="<?= $ev['event_id'] ?>"
+                                                data-count="<?= $ev['participant_count'] ?>">
+                                            <?= htmlspecialchars($ev['title']) ?>
+                                            (<?= date('M j, Y', strtotime($ev['start_time'])) ?>)
+                                            — <?= $ev['participant_count'] ?> registered
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endif; ?>
+                            <?php if (!empty($past)): ?>
+                                <optgroup label="── Past Events ──">
+                                    <?php foreach ($past as $ev): ?>
+                                        <option value="<?= $ev['event_id'] ?>"
+                                                data-count="<?= $ev['participant_count'] ?>">
+                                            <?= htmlspecialchars($ev['title']) ?>
+                                            (<?= date('M j, Y', strtotime($ev['start_time'])) ?>)
+                                            — <?= $ev['participant_count'] ?> registered
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endif; ?>
                         </select>
                         <div id="announcementBadge" style="display:none;" class="participant-badge">
                             <i data-lucide="users" style="width:14px;height:14px;"></i>
@@ -653,7 +716,7 @@ $history_stmt->close();
             </div>
         </div>
 
-        <!-- TAB: HISTORY -->
+        <!-- ==================== TAB: HISTORY ==================== -->
         <div id="tab-history" class="tab-panel">
             <div class="history-card">
                 <h3>
@@ -707,21 +770,21 @@ $history_stmt->close();
 
     // Show participant count badge when event is selected
     function updateParticipantCount(select, badgeId) {
-        const opt = select.options[select.selectedIndex];
+        const opt   = select.options[select.selectedIndex];
         const count = opt.getAttribute('data-count');
         const badge = document.getElementById(badgeId);
-        const badgeText = document.getElementById(badgeId + 'Text');
+        const text  = document.getElementById(badgeId + 'Text');
 
         if (count !== null && select.value) {
             badge.style.display = 'inline-flex';
-            badgeText.textContent = count + ' confirmed participant' + (count == 1 ? '' : 's') + ' will receive this email';
+            text.textContent = count + ' confirmed participant' + (count == 1 ? '' : 's') + ' will receive this email';
             lucide.createIcons();
         } else {
             badge.style.display = 'none';
         }
     }
 
-    // Prevent double-submit
+    // Prevent double-submit on reminder form
     document.getElementById('reminderForm').addEventListener('submit', function() {
         const btn = document.getElementById('sendReminderBtn');
         btn.disabled = true;
@@ -729,7 +792,7 @@ $history_stmt->close();
         lucide.createIcons();
     });
 
-    // Auto-dismiss alerts
+    // Auto-dismiss success/error alerts after 6s
     setTimeout(() => {
         document.querySelectorAll('.alert-success, .alert-error').forEach(el => {
             el.style.opacity = '0';
