@@ -303,16 +303,13 @@ function sendAnnouncement($conn, $event_id, $subject_text, $message, $sender_use
         try {
             $mail = createMailer();
             $mail->addAddress($p['email'], $participant_name);
-            $mail->Subject = "📢 [{$event_title}] " . $subject_text;
+            $mail->Subject = $subject_text;
             $mail->Body    = $body;
             $mail->AltBody = "{$subject_text}\n\n{$message}\n\n— {$sender_name}";
             $mail->send();
 
-            // Log announcement send
-            $log = $conn->prepare("INSERT INTO email_log (registration_id, email_type) VALUES (?, 'announcement')");
-            $log->bind_param("i", $p['registration_id']);
-            $log->execute();
-            $log->close();
+            // Note: announcements are tracked in the `announcement` table, not email_log
+            // (email_log unique constraint is for reminders only)
 
             $counts['sent']++;
         } catch (Exception $e) {

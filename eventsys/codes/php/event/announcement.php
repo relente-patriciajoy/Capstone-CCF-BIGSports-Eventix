@@ -686,7 +686,7 @@ $history_stmt->close();
                         <input type="text" name="subject"
                                placeholder="e.g. Venue change for Saturday's event"
                                maxlength="200"
-                               value="<?= htmlspecialchars($_POST['subject'] ?? '') ?>">
+                               value="<?= (isset($_POST['send_announcement']) && empty($error)) ? '' : htmlspecialchars($_POST['subject'] ?? '') ?>">
                         <small style="color:#9ca3af;font-size:0.8rem;margin-top:4px;display:block;">
                             This will appear as the email subject line.
                         </small>
@@ -696,7 +696,7 @@ $history_stmt->close();
                         <label>Message</label>
                         <textarea name="announcement_message"
                                   placeholder="Write your announcement here. Be clear and concise — participants will receive this directly in their inbox."
-                                  maxlength="2000"><?= htmlspecialchars($_POST['announcement_message'] ?? '') ?></textarea>
+                                  maxlength="2000"><?= (isset($_POST['send_announcement']) && empty($error)) ? '' : htmlspecialchars($_POST['announcement_message'] ?? '') ?></textarea>
                         <small style="color:#9ca3af;font-size:0.8rem;margin-top:4px;display:block;">
                             Max 2,000 characters. Your name will be shown as the sender.
                         </small>
@@ -707,8 +707,7 @@ $history_stmt->close();
                         <span>Announcements are sent to <strong>all confirmed registered participants</strong> of the selected event. Use responsibly.</span>
                     </div>
 
-                    <button type="submit" name="send_announcement" class="btn-send"
-                            onclick="return confirm('Send this announcement to all registered participants?')">
+                    <button type="button" class="btn-send" onclick="openConfirmModal()">
                         <i data-lucide="send" style="width:17px;height:17px;"></i>
                         Send Announcement
                     </button>
@@ -753,6 +752,73 @@ $history_stmt->close();
         </div>
 
     </div>
+
+<!-- ==================== CONFIRM MODAL ==================== -->
+<div id="confirmModal" style="
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+">
+    <div style="
+        background:white;
+        border-radius:16px;
+        padding:32px 28px 24px;
+        max-width:420px;
+        width:90%;
+        box-shadow:0 20px 60px rgba(0,0,0,0.2);
+        text-align:center;
+        font-family:Poppins,sans-serif;
+    ">
+        <div style="
+            width:56px;height:56px;
+            background:#fff5f5;
+            border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            margin:0 auto 16px;
+        ">
+            <i data-lucide="megaphone" style="width:26px;height:26px;color:#8b0000;"></i>
+        </div>
+        <h3 style="margin:0 0 8px;font-size:1.1rem;color:#1f2937;">Send Announcement?</h3>
+        <p style="margin:0 0 24px;font-size:0.9rem;color:#6b7280;line-height:1.5;">
+            This will send your announcement to <strong>all confirmed registered participants</strong> of the selected event. This action cannot be undone.
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button onclick="closeConfirmModal()" style="
+                flex:1;
+                padding:11px;
+                border:1.5px solid #e5e7eb;
+                border-radius:8px;
+                background:white;
+                font-family:Poppins,sans-serif;
+                font-size:0.92rem;
+                font-weight:500;
+                color:#374151;
+                cursor:pointer;
+                transition:all 0.2s;
+            " onmouseover="this.style.borderColor='#9ca3af'" onmouseout="this.style.borderColor='#e5e7eb'">
+                Cancel
+            </button>
+            <button onclick="confirmSend()" style="
+                flex:1;
+                padding:11px;
+                border:none;
+                border-radius:8px;
+                background:linear-gradient(135deg,#8b0000,#c0392b);
+                font-family:Poppins,sans-serif;
+                font-size:0.92rem;
+                font-weight:600;
+                color:white;
+                cursor:pointer;
+                transition:all 0.2s;
+            ">
+                Yes, Send It
+            </button>
+        </div>
+    </div>
+</div>
 </main>
 
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -784,7 +850,45 @@ $history_stmt->close();
         }
     }
 
-    // Prevent double-submit on reminder form
+    // Confirm modal
+    function openConfirmModal() {
+        const form = document.getElementById('announcementForm');
+        if (!form.reportValidity()) return; // trigger native HTML5 validation first
+        const modal = document.getElementById('confirmModal');
+        modal.style.display = 'flex';
+        lucide.createIcons();
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    function confirmSend() {
+        closeConfirmModal();
+        // Add hidden submit name and submit
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'send_announcement';
+        input.value = '1';
+        const form = document.getElementById('announcementForm');
+        form.appendChild(input);
+        form.submit();
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeConfirmModal();
+    });
+
+    // Clear announcement fields after successful send
+    <?php if (isset($_POST['send_announcement']) && empty($error)): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subjectField = document.querySelector('[name="subject"]');
+            const messageField = document.querySelector('[name="announcement_message"]');
+            if (subjectField) subjectField.value = '';
+            if (messageField) messageField.value = '';
+        });
+    <?php endif; ?>
     document.getElementById('reminderForm').addEventListener('submit', function() {
         const btn = document.getElementById('sendReminderBtn');
         btn.disabled = true;
