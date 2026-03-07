@@ -34,14 +34,41 @@
 }
 
 /* Event Head Buttons */
-.event-head-page button {
-  background: linear-gradient(135deg, var(--maroon) 0%, var(--dark-maroon) 100%);
-  box-shadow: 0 2px 8px rgba(128, 0, 32, 0.2);
+.tab-bar .tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent !important;
+  border-radius: 8px;
+  font-family: Poppins, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #6b7280 !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: none !important;
+  transform: none !important;
+  width: auto;
+  margin: 0;
+  padding: 10px 16px;
 }
 
-.event-head-page button:hover {
-  background: linear-gradient(135deg, var(--dark-maroon) 0%, #400010 100%);
-  box-shadow: 0 4px 12px rgba(128, 0, 32, 0.3);
+.tab-bar .tab-btn:hover {
+  background: rgba(139, 0, 0, 0.08) !important;
+  color: #8b0000 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.tab-bar .tab-btn.active {
+  background: white !important;
+  color: #8b0000 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Event Head Form Inputs */

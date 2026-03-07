@@ -413,6 +413,15 @@ $events = $stmt->get_result();
                     </a>
                     <?php endif; ?>
 
+                    <!-- Announcements & Reminders -->
+                    <a href="announcement.php" class="quick-action-card">
+                        <div class="action-icon-simple" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white;">
+                          <i data-lucide="megaphone"></i>
+                        </div>
+                        <h3>Announcements</h3>
+                        <p>Send reminders and announcements to registered participants</p>
+                    </a>
+
                     <?php if (hasPermission($conn, $user_id, 'system.reports')): ?>
                     <a href="reports.php" class="quick-action-card">
                         <div class="action-icon-simple success">
