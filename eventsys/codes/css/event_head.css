@@ -1372,13 +1372,127 @@
   }
 }
 
+/* ─── TABLET (≤ 768px) ─────────────────────── */
 @media (max-width: 768px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+
+  .main-content {
+    padding: 16px !important;
   }
 
+  /* Banner */
+  .banner {
+    flex-direction: column;
+    padding: 24px 20px !important;
+    gap: 0;
+  }
+
+  .banner h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 6px;
+  }
+
+  .banner p {
+    font-size: 0.9rem !important;
+  }
+
+  .banner img {
+    display: none;
+  }
+
+  /* hide logo on small screens */
+
+  /* Page wrapper */
+  .eh-page {
+    padding: 0;
+  }
+
+  /* Hub container */
+  .event-management-hub-container {
+    padding: 16px;
+  }
+
+  /* Card */
+  .eh-card {
+    padding: 16px;
+  }
+
+  .eh-card h2 {
+    font-size: 1.2rem;
+  }
+
+  .eh-card h3 {
+    font-size: 1rem;
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .section-title-with-icon {
+    font-size: 1.3rem;
+  }
+
+  /* Stats grid — 2 cols on tablet */
+  .eh-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .eh-stat-number {
+    font-size: 1.8rem;
+  }
+
+  .eh-stat-label {
+    font-size: 0.75rem;
+  }
+
+  /* Quick actions — 2 cols */
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .quick-action-card {
+    padding: 16px 12px;
+    gap: 8px;
+  }
+
+  .action-icon-simple {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .action-icon-simple i {
+    width: 22px;
+    height: 22px;
+  }
+
+  .quick-action-card h3 {
+    font-size: 13px;
+  }
+
+  .quick-action-card p {
+    font-size: 11px;
+    display: none;
+  }
+
+  /* hide description on mobile */
+
+  /* Event list */
   .event-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* Forms */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .eh-form-row {
     grid-template-columns: 1fr;
   }
 
@@ -1386,48 +1500,344 @@
     flex-direction: column;
   }
 
-  .eh-tab-bar {
-    flex-direction: column;
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
   }
 
+  /* Tab bar — horizontal scroll instead of stacking */
+  .eh-tab-bar {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .eh-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .eh-tab-btn {
+    flex: 0 0 auto;
+    padding: 9px 14px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* Reminder cards — 1 col */
   .eh-reminder-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  .eh-report-select-bar {
-    flex-direction: column;
+  .eh-reminder-option label {
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px;
+    text-align: left;
   }
 
-  .event-management-hub-container {
-    padding: 20px;
+  .eh-reminder-option label .remind-icon {
+    font-size: 20px;
   }
 
+  .eh-reminder-option label .remind-days {
+    font-size: 1rem;
+  }
+
+  /* Toolbar — stack */
   .eh-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .eh-search {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .eh-select {
+    width: 100%;
+  }
+
+  .eh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Filter bar — horizontal scroll */
+  .eh-filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    gap: 8px;
+  }
+
+  .eh-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .eh-filter-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .eh-export-btn {
+    flex: 0 0 auto;
+    margin-left: 0;
+    white-space: nowrap;
+  }
+
+  /* Table — horizontal scroll */
+  .eh-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+
+  .eh-table {
+    min-width: 560px;
+    font-size: 0.82rem;
+  }
+
+  .eh-table th,
+  .eh-table td {
+    padding: 10px 12px;
+  }
+
+  /* Select + button row — stack on mobile */
+  .eh-select-row {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .eh-search {
-    min-width: unset;
+  .eh-select-row select {
     width: 100%;
   }
 
-  .eh-export-btn {
-    margin-left: 0;
+  .eh-select-row button {
+    width: 100%;
+    justify-content: center;
   }
 
-  .eh-filter-bar {
+  /* Report select bar */
+  .eh-report-select-bar {
+    flex-direction: column;
+  }
+
+  .eh-report-select-bar select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  /* Overview grid */
+  .eh-overview-grid {
+    grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  /* Export bar */
+  .eh-export-bar {
+    flex-direction: column;
+  }
+
+  .eh-export-bar .eh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Announcement history */
+  .eh-ann-header {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .eh-ann-meta {
+    white-space: normal;
+  }
+
+  /* Modal */
+  .eh-modal-box {
+    padding: 24px 18px 18px;
+    border-radius: 12px;
+  }
+
+  .eh-modal-actions {
+    flex-direction: column;
+  }
+
+  .eh-modal-actions .eh-btn {
+    width: 100%;
+  }
+
+  /* Send button */
+  .eh-btn-send {
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+
+  /* Section divider spacing */
+  .section-divider {
+    margin: 24px 0;
+  }
+
+  /* Hub container inner sections */
+  .hub-section {
+    margin-bottom: 0;
   }
 }
 
+/* ─── MOBILE (≤ 480px) ─────────────────────── */
 @media (max-width: 480px) {
-  .quick-actions-grid {
-    grid-template-columns: 1fr;
+
+  .main-content {
+    padding: 12px !important;
   }
 
+  /* Banner */
+  .banner {
+    padding: 18px 14px !important;
+    border-radius: 12px;
+  }
+
+  .banner h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .banner p {
+    font-size: 0.82rem !important;
+  }
+
+  /* Stats — still 2 cols but tighter */
   .eh-stats-grid {
-    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .eh-stat-card {
+    padding: 14px 10px;
+  }
+
+  .eh-stat-number {
+    font-size: 1.5rem;
+  }
+
+  /* Quick actions — 2 cols on small phones */
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .quick-action-card {
+    padding: 14px 10px;
+    border-radius: 10px;
+  }
+
+  /* Cards */
+  .eh-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  /* Table font even smaller */
+  .eh-table {
+    min-width: 480px;
+    font-size: 0.78rem;
+  }
+
+  .eh-table th,
+  .eh-table td {
+    padding: 8px 10px;
+  }
+
+  /* Badges */
+  .eh-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  /* Filter / export buttons */
+  .eh-filter-btn {
+    font-size: 0.8rem;
+    padding: 6px 14px;
+  }
+
+  .eh-export-btn {
+    font-size: 0.8rem;
+    padding: 6px 14px;
+  }
+
+  /* Form inputs */
+  .eh-form-group input,
+  .eh-form-group select,
+  .eh-form-group textarea {
+    font-size: 0.88rem;
+    padding: 9px 12px;
+  }
+
+  /* Modal */
+  .eh-modal-box {
+    width: 95%;
+    padding: 20px 14px 16px;
+  }
+
+  .eh-modal-title {
+    font-size: 1rem;
+  }
+
+  .eh-modal-body {
+    font-size: 0.85rem;
+  }
+
+  /* Section titles */
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-title-with-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Event card actions */
+  .event-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .edit-link,
+  .delete-link {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ─── VERY SMALL (≤ 360px) ──────────────────── */
+@media (max-width: 360px) {
+  .main-content {
+    padding: 10px !important;
+  }
+
+  .eh-card {
+    padding: 12px;
+  }
+
+  .quick-action-card h3 {
+    font-size: 11px;
+  }
+
+  .eh-tab-btn {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .banner h1 {
+    font-size: 1.1rem !important;
   }
 }
 

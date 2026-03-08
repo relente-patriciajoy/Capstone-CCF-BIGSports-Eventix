@@ -149,7 +149,8 @@ $months = array_reverse($months); $regs = array_reverse($regs); $attended = arra
             </div>
 
             <?php if ($participants->num_rows > 0): ?>
-            <table class="eh-table" id="engagementTable">
+            <div class="eh-table-wrap">
+                <table class="eh-table" id="engagementTable">
                 <thead><tr><th>Participant</th><th>Email</th><th>Total Events</th><th>Attended</th><th>Missed</th><th>Attendance Rate</th><th>Engagement Level</th><th>Member Since</th><th>Last Event</th></tr></thead>
                 <tbody>
                     <?php $participants->data_seek(0); while ($p = $participants->fetch_assoc()):
@@ -175,6 +176,7 @@ $months = array_reverse($months); $regs = array_reverse($regs); $attended = arra
                     <?php endwhile; ?>
                 </tbody>
             </table>
+                </div>
             <?php else: ?>
                 <div class="eh-empty">
                     <i data-lucide="inbox" style="width:56px;height:56px;"></i>

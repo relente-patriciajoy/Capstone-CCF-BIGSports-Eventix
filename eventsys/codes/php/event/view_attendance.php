@@ -120,6 +120,7 @@ if ($selected_event) {
                     <?php endif; ?>
                 </div>
 
+                <div class="eh-table-wrap">
                 <table class="eh-table" id="attendanceTable">
                     <thead>
                         <tr><th>Name</th><th>Email</th><th>Check-In</th><th>Check-Out</th><th>Status</th></tr>
@@ -140,6 +141,7 @@ if ($selected_event) {
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                </div>
             <?php elseif ($selected_event): ?>
                 <div class="eh-empty">
                     <i data-lucide="inbox" style="width:56px;height:56px;"></i>

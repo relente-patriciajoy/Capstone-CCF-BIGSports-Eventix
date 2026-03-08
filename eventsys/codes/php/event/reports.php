@@ -133,6 +133,7 @@ function generateEventReport($conn, $event_id) {
                     <button class="eh-btn eh-btn-secondary" onclick="window.print()"><i data-lucide="file-text" style="width:16px;height:16px;"></i> Print / PDF</button>
                 </div>
 
+                <div class="eh-table-wrap">
                 <table class="eh-table" id="participantTable">
                     <thead>
                         <tr><th>Name</th><th>Email</th><th>Registered</th><th>Table</th><th>Check-In</th><th>Check-Out</th><th>Status</th></tr>
@@ -155,6 +156,7 @@ function generateEventReport($conn, $event_id) {
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>

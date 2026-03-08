@@ -96,6 +96,7 @@ $inactive_members->data_seek(0);
                     <input type="text" id="searchInput" class="eh-search" placeholder="Search by name, email, or phone...">
                 </div>
 
+                <div class="eh-table-wrap">
                 <table class="eh-table" id="inactiveTable">
                     <thead>
                         <tr><th>Name</th><th>Email</th><th>Phone</th><th>Total Registrations</th><th>Missed Events</th><th>Last Registered</th><th>Action</th></tr>
@@ -121,6 +122,7 @@ $inactive_members->data_seek(0);
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                </div>
             <?php else: ?>
                 <div class="eh-empty">
                     <i data-lucide="check-circle" style="width:56px;height:56px;color:#10b981;"></i>
