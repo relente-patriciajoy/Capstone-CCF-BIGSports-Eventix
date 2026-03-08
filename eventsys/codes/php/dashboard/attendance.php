@@ -8,10 +8,9 @@ if (!isset($_SESSION['user_id'])) {
 
 include('../../includes/db.php');
 
-$user_id = $_SESSION['user_id'];
+$user_id   = $_SESSION['user_id'];
 $full_name = $_SESSION['full_name'];
 
-// Fetch role (for sidebar)
 $stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -35,13 +34,11 @@ $auto_close = $conn->prepare("
 $auto_close->bind_param("i", $user_id);
 $auto_close->execute();
 $auto_close->close();
-// -------------------------------------------------------
 
 // Handle check-in
 if (isset($_POST['check_in'])) {
     $registration_id = $_POST['registration_id'];
 
-    // Block check-in if event ended AND user was absent
     $guard = $conn->prepare("
         SELECT e.end_time, a.check_in_time
         FROM registration r
@@ -61,8 +58,8 @@ if (isset($_POST['check_in'])) {
         exit();
     }
 
-    $stmt = $conn->prepare("INSERT INTO attendance (registration_id, check_in_time, status) 
-                            VALUES (?, NOW(), 'present') 
+    $stmt = $conn->prepare("INSERT INTO attendance (registration_id, check_in_time, status)
+                            VALUES (?, NOW(), 'present')
                             ON DUPLICATE KEY UPDATE check_in_time = NOW(), status = 'present'");
     $stmt->bind_param("i", $registration_id);
     $stmt->execute();
@@ -73,7 +70,6 @@ if (isset($_POST['check_in'])) {
 if (isset($_POST['check_out'])) {
     $registration_id = $_POST['registration_id'];
 
-    // Block check-out if event has already ended
     $guard = $conn->prepare("
         SELECT e.end_time
         FROM registration r
@@ -98,7 +94,6 @@ if (isset($_POST['check_out'])) {
     $stmt->close();
 }
 
-// Get all registrations with event and attendance info
 $query = "
 SELECT r.registration_id, e.title, e.start_time, e.end_time,
        a.check_in_time, a.check_out_time, a.status, a.notes
@@ -113,7 +108,6 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,6 +122,7 @@ $result = $stmt->get_result();
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
 <?php include('../components/sidebar.php'); ?>
 
@@ -136,7 +131,7 @@ $result = $stmt->get_result();
         <div>
             <?php if ($role === 'event_head'): ?>
             <div class="event-head-badge">
-                <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i>
+                <i data-lucide="briefcase" style="width:14px;height:14px;"></i>
                 Event Organizer
             </div>
             <?php endif; ?>
@@ -146,113 +141,167 @@ $result = $stmt->get_result();
         <img src="../../assets/eventix-logo.png" alt="Eventix logo" />
     </header>
 
-    <!-- Attendance error/info message -->
     <?php if (isset($_SESSION['attendance_error'])): ?>
-        <div id="attendance-alert" style="
-            margin: 16px 24px;
-            padding: 14px 18px;
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #ef4444;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95rem;
-        ">
-            <i data-lucide="alert-circle" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
+        <div id="attendance-alert" class="att-alert">
+            <i data-lucide="alert-circle"></i>
             <?= htmlspecialchars($_SESSION['attendance_error']) ?>
         </div>
         <?php unset($_SESSION['attendance_error']); ?>
     <?php endif; ?>
 
-    <section class="grid-section">
-        <?php if ($result->num_rows > 0): ?>
-            <?php while ($row = $result->fetch_assoc()):
-                $event_ended     = strtotime($row['end_time']) < time();
+    <?php if ($result->num_rows > 0): ?>
+
+        <!-- Controls: filter dropdown + search -->
+        <div class="events-controls">
+            <div class="events-filter-wrap">
+                <select id="events-filter" class="events-filter-select" aria-label="Filter attendance">
+                    <option value="all">All Events</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="past">Past</option>
+                </select>
+            </div>
+
+            <div class="events-search-wrap">
+                <svg class="events-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                    type="text"
+                    id="events-search"
+                    class="events-search"
+                    placeholder="Search by event name…"
+                    autocomplete="off"
+                    aria-label="Search attendance"
+                >
+            </div>
+        </div>
+
+        <section class="grid-section" id="events-grid">
+            <?php
+            $now = time();
+            $result->data_seek(0);
+            while ($row = $result->fetch_assoc()):
+                $event_ended     = strtotime($row['end_time']) < $now;
                 $was_absent      = empty($row['check_in_time']);
                 $missed_checkout = ($row['notes'] === 'Left without checking out');
-                // Fully locked: event ended and user never checked in at all
-                $locked = $event_ended && $was_absent;
+                $locked          = $event_ended && $was_absent;
+                $end_unix        = strtotime($row['end_time']);
             ?>
-                <div class="card">
-                    <h3><?= htmlspecialchars($row['title']) ?></h3>
-                    <p><strong>Event Time:</strong><br><?= $row['start_time'] ?> → <?= $row['end_time'] ?></p>
-                    <p><strong>Checked In:</strong> <?= $row['check_in_time'] ?? 'Not yet' ?></p>
-                    <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ?? 'Not yet' ?></p>
-                    <p><strong>Status:</strong> <?= $row['status'] ?? 'absent' ?></p>
+            <div class="card <?= $event_ended ? 'event-past-card' : '' ?>"
+                 data-end="<?= $end_unix ?>"
+                 data-title="<?= strtolower(htmlspecialchars($row['title'])) ?>">
 
-                    <?php if ($missed_checkout): ?>
-                        <!-- Checked in but never checked out — auto-closed -->
-                        <p style="color: #92400e; font-size: 0.88rem; margin-top: 8px;
-                                  background: #fff3cd; border-left: 3px solid #f59e0b;
-                                  padding: 8px 10px; border-radius: 4px;
-                                  display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="alert-triangle" style="width: 15px; height: 15px; flex-shrink: 0;"></i>
-                            <em>Left without checking out — marked <strong>present</strong></em>
-                        </p>
+                <h3><?= htmlspecialchars($row['title']) ?></h3>
+                <p><strong>Event Time:</strong><br><?= $row['start_time'] ?> → <?= $row['end_time'] ?></p>
+                <p><strong>Checked In:</strong> <?= $row['check_in_time'] ?? 'Not yet' ?></p>
+                <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ?? 'Not yet' ?></p>
+                <p><strong>Status:</strong> <?= $row['status'] ?? 'absent' ?></p>
 
-                    <?php elseif ($locked): ?>
-                        <!-- Event ended, user was absent — fully locked -->
-                        <p style="color: #b91c1c; font-size: 0.88rem; margin-top: 8px;
-                                  display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="lock" style="width: 15px; height: 15px;"></i>
-                            <em>Event ended — attendance locked (absent)</em>
-                        </p>
+                <?php if ($missed_checkout): ?>
+                    <div class="att-notice att-notice-warning">
+                        <i data-lucide="alert-triangle"></i>
+                        <em>Left without checking out — marked <strong>present</strong></em>
+                    </div>
 
-                    <?php elseif (!$row['check_in_time']): ?>
-                        <!-- Not checked in yet, event still active -->
-                        <form method="post">
-                            <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
-                            <button type="submit" name="check_in">
-                                <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
-                                Check In
-                            </button>
-                        </form>
+                <?php elseif ($locked): ?>
+                    <div class="att-notice att-notice-danger">
+                        <i data-lucide="lock"></i>
+                        <em>Event ended — attendance locked (absent)</em>
+                    </div>
 
-                    <?php elseif ($row['check_in_time'] && !$row['check_out_time'] && !$event_ended): ?>
-                        <!-- Checked in, event still live → allow checkout -->
-                        <form method="post">
-                            <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
-                            <button type="submit" name="check_out">
-                                <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
-                                Check Out
-                            </button>
-                        </form>
+                <?php elseif (!$row['check_in_time']): ?>
+                    <form method="post" style="margin-top:12px;">
+                        <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
+                        <button type="submit" name="check_in">
+                            <i data-lucide="log-in" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
+                            Check In
+                        </button>
+                    </form>
 
-                    <?php else: ?>
-                        <!-- Properly checked in and out -->
-                        <p style="color: #059669; font-weight: 600;">
-                            <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle;"></i>
-                            <em>Attendance complete</em>
-                        </p>
-                    <?php endif; ?>
-                </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <div class="card">
-                <p>You haven't registered for any events yet.</p>
-                <a href="events.php" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 15px;">
-                    <i data-lucide="search" style="width: 16px; height: 16px;"></i>
-                    Browse Events
-                </a>
+                <?php elseif ($row['check_in_time'] && !$row['check_out_time'] && !$event_ended): ?>
+                    <form method="post" style="margin-top:12px;">
+                        <input type="hidden" name="registration_id" value="<?= $row['registration_id'] ?>">
+                        <button type="submit" name="check_out">
+                            <i data-lucide="log-out" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
+                            Check Out
+                        </button>
+                    </form>
+
+                <?php else: ?>
+                    <div class="att-notice att-notice-success">
+                        <i data-lucide="check-circle"></i>
+                        <em>Attendance complete</em>
+                    </div>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
-    </section>
+            <?php endwhile; ?>
+
+            <div class="events-no-results" id="no-results">
+                <svg class="no-res-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+                </svg>
+                <p id="no-results-msg">No events found.</p>
+            </div>
+        </section>
+
+    <?php else: ?>
+        <div class="card" style="text-align:center;padding:48px 24px;">
+            <i data-lucide="calendar-off" style="width:48px;height:48px;opacity:0.4;display:block;margin:0 auto 16px;"></i>
+            <p style="color:#6b7280;margin-bottom:20px;">You haven't registered for any events yet.</p>
+            <a href="events.php" class="qr-btn" style="display:inline-flex;">
+                <i data-lucide="search" style="width:16px;height:16px;"></i>
+                Browse Events
+            </a>
+        </div>
+    <?php endif; ?>
 </main>
 
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
-  lucide.createIcons();
+lucide.createIcons();
 
-  const alertBox = document.getElementById('attendance-alert');
-  if (alertBox) {
+const alertBox = document.getElementById('attendance-alert');
+if (alertBox) {
     setTimeout(() => {
-      alertBox.style.opacity = '0';
-      alertBox.style.transition = 'opacity 0.5s';
-      setTimeout(() => alertBox.remove(), 500);
+        alertBox.style.opacity = '0';
+        setTimeout(() => alertBox.remove(), 500);
     }, 4000);
-  }
+}
+
+const cards        = Array.from(document.querySelectorAll('#events-grid .card'));
+const noResults    = document.getElementById('no-results');
+const noResultsMsg = document.getElementById('no-results-msg');
+const searchInput  = document.getElementById('events-search');
+const filterSelect = document.getElementById('events-filter');
+const now          = Math.floor(Date.now() / 1000);
+
+if (cards.length && filterSelect) {
+    function applyFilters() {
+        const filter = filterSelect.value;
+        const query  = searchInput.value.trim().toLowerCase();
+        let visible  = 0;
+
+        cards.forEach(card => {
+            const isPast     = parseInt(card.dataset.end, 10) < now;
+            const passFilter = filter === 'all' ? true : filter === 'upcoming' ? !isPast : isPast;
+            const passSearch = !query || card.dataset.title.includes(query);
+            const show = passFilter && passSearch;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+        if (visible === 0) {
+            noResultsMsg.textContent = query
+                ? `No events found for "${query}".`
+                : filter === 'past' ? 'No past events.' : filter === 'upcoming' ? 'No upcoming events.' : 'No registered events.';
+        }
+    }
+
+    filterSelect.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+    applyFilters();
+}
 </script>
 </body>
 </html>

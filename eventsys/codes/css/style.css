@@ -979,3 +979,306 @@ a:hover {
     font-size: 0.85rem;
   }
 }
+
+/* ============================================
+   FILTER + SEARCH CONTROLS
+   Shared by: events.php, my_events.php, attendance.php
+   ============================================ */
+
+.events-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: nowrap;
+}
+
+/* ── Filter dropdown wrapper ── */
+.events-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Chevron icon inside the dropdown */
+.events-filter-wrap::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #ffffff;
+  pointer-events: none;
+}
+
+/* The <select> element styled as a maroon pill */
+.events-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 42px 10px 16px;
+  background: linear-gradient(135deg, var(--maroon, #800020), var(--dark-maroon, #5a0016));
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  height: 42px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(128, 0, 32, 0.25);
+  transition: box-shadow 0.2s, background 0.2s;
+  outline: none;
+  min-width: 160px;
+}
+
+.events-filter-select:hover {
+  box-shadow: 0 4px 12px rgba(128, 0, 32, 0.35);
+}
+
+.events-filter-select:focus {
+  box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.2);
+}
+
+.events-filter-select option {
+  background: #ffffff;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* ── Search wrapper ── */
+.events-search-wrap {
+  flex: 1;
+  min-width: 180px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Inline SVG search icon */
+.events-search-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
+  display: block;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* Search input */
+.events-search {
+  width: 100%;
+  padding: 10px 14px 10px 46px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  color: #1f2937;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin: 0;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.events-search:focus {
+  outline: none;
+  border-color: var(--maroon, #800020);
+  box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.08);
+}
+
+/* ── No-results placeholder inside grid ── */
+.events-no-results {
+  display: none;
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 20px;
+  color: #9ca3af;
+}
+
+.events-no-results .no-res-icon {
+  display: block;
+  margin: 0 auto 14px;
+  opacity: 0.35;
+  width: 48px;
+  height: 48px;
+}
+
+.events-no-results p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ── Attendance alert ── */
+.att-alert {
+  margin: 0 0 20px 0;
+  padding: 14px 18px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  transition: opacity 0.5s;
+}
+
+.att-alert svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Attendance card notices ── */
+.att-notice {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.att-notice svg {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+.att-notice-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.att-notice-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-left: 3px solid #ef4444;
+}
+
+.att-notice-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 3px solid #10b981;
+}
+
+/* Past event dim */
+.event-past-card {
+  opacity: 0.82;
+}
+
+/* Past badge (my_events) */
+.event-past-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+/* Status badges (my_events) */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.status-confirmed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* QR / browse button (my_events, attendance empty state) */
+.qr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--maroon, #800020), var(--dark-maroon, #5a0016));
+  color: white !important;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.qr-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(128, 0, 32, 0.3);
+  color: white !important;
+}
+
+/* ============================================
+   RESPONSIVE — FILTER + SEARCH CONTROLS
+   ============================================ */
+
+@media (max-width: 768px) {
+  .events-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .events-filter-select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .events-search-wrap {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .events-search {
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .events-filter-select {
+    font-size: 0.85rem;
+    height: 40px;
+  }
+
+  .events-search {
+    font-size: 0.85rem;
+    padding: 9px 12px 9px 44px;
+  }
+
+  .att-alert {
+    font-size: 0.88rem;
+    padding: 12px 14px;
+  }
+}
