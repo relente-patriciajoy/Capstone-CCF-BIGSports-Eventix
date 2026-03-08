@@ -60,9 +60,6 @@
 
 /* ============================================
    PAGE WRAPPER
-   Sits inside .main-content (which already has padding: 40px in style.css).
-   We set padding: 0 so there's no double-padding.
-   Use this on every event-head inner wrapper div.
    ============================================ */
 
 .eh-page {
@@ -340,12 +337,12 @@
 }
 
 .eh-btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
+  background: #374151;
+  color: white !important;
 }
 
 .eh-btn-secondary:hover {
-  background: #e5e7eb;
+  background: #1f2937;
   transform: none;
   box-shadow: none;
 }
@@ -410,31 +407,31 @@
   padding: 7px 18px;
   border-radius: 20px;
   border: 1.5px solid #e5e7eb;
-  background: white;
-  color: #374151;
+  background: white !important;
+  color: #374151 !important;
   font-family: Poppins, sans-serif;
   font-size: 0.87rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
   margin: 0;
 }
 
 .eh-filter-btn:hover {
   border-color: var(--maroon);
-  color: var(--maroon);
-  background: #fff5f5;
-  transform: none;
-  box-shadow: none;
+  color: var(--maroon) !important;
+  background: #fff5f5 !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .eh-filter-btn.active {
-  background: var(--maroon);
-  color: white;
+  background: var(--maroon) !important;
+  color: white !important;
   border-color: var(--maroon);
-  box-shadow: 0 2px 6px rgba(128, 0, 32, 0.25);
+  box-shadow: 0 2px 6px rgba(128, 0, 32, 0.25) !important;
 }
 
 /* Export button pushed to the end of filter bar */
@@ -447,23 +444,23 @@
   padding: 7px 18px;
   border-radius: 8px;
   border: none;
-  background: #f3f4f6;
-  color: #374151;
+  background: #374151 !important;
+  color: white !important;
   font-family: Poppins, sans-serif;
   font-size: 0.87rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
   margin-top: 0;
   margin-bottom: 0;
 }
 
 .eh-export-btn:hover {
-  background: #e5e7eb;
-  transform: none;
-  box-shadow: none;
+  background: #1f2937 !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Small inline action button (Send Reminder per row) */
@@ -570,36 +567,36 @@
   flex: 1;
   padding: 10px 16px;
   border: none;
-  background: transparent;
+  background: transparent !important;
   border-radius: 8px;
   font-family: Poppins, sans-serif;
   font-size: 0.92rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #374151 !important;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
   width: auto;
   margin: 0;
 }
 
 .eh-tab-btn:hover {
-  background: rgba(139, 0, 0, 0.08);
-  color: var(--maroon);
-  transform: none;
-  box-shadow: none;
+  background: rgba(139, 0, 0, 0.08) !important;
+  color: var(--maroon) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .eh-tab-btn.active {
-  background: white;
-  color: var(--maroon);
+  background: white !important;
+  color: var(--maroon) !important;
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .eh-tab-panel {
@@ -793,8 +790,14 @@
   font-size: 0.95rem;
 }
 
+.eh-event-select-form .eh-select-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .eh-event-select-form select {
-  width: 100%;
+  flex: 1;
   padding: 11px 14px;
   border: 1.5px solid #e5e7eb;
   border-radius: 8px;
@@ -804,7 +807,7 @@
   color: #1f2937;
   transition: border-color 0.2s;
   box-sizing: border-box;
-  margin-bottom: 12px;
+  margin: 0;
 }
 
 .eh-event-select-form select:focus {
@@ -1489,4 +1492,36 @@
   flex: 1;
   justify-content: center;
   padding: 11px 20px;
+}
+
+/* ============================================
+   MANAGE EVENTS - ALERT MESSAGES
+   ============================================ */
+
+.eh-alert-msg {
+  padding: 15px 18px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.93rem;
+}
+
+.eh-alert-msg i {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.eh-alert-msg.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.eh-alert-msg.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
 }

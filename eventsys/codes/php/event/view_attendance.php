@@ -81,13 +81,15 @@ if ($selected_event) {
             <div class="eh-event-select-form">
                 <form method="GET">
                     <label for="event_id"><i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle;"></i> Select Event</label>
-                    <select name="event_id" id="event_id" required>
-                        <option value="">-- Choose an Event --</option>
-                        <?php $events->data_seek(0); while ($ev = $events->fetch_assoc()): ?>
-                            <option value="<?= $ev['event_id'] ?>" <?= $selected_event == $ev['event_id'] ? 'selected' : '' ?>><?= htmlspecialchars($ev['title']) ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <button type="submit"><i data-lucide="search" style="width:16px;height:16px;"></i> View Attendance</button>
+                    <div class="eh-select-row">
+                        <select name="event_id" id="event_id" required>
+                            <option value="">-- Choose an Event --</option>
+                            <?php $events->data_seek(0); while ($ev = $events->fetch_assoc()): ?>
+                                <option value="<?= $ev['event_id'] ?>" <?= $selected_event == $ev['event_id'] ? 'selected' : '' ?>><?= htmlspecialchars($ev['title']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                        <button type="submit"><i data-lucide="search" style="width:16px;height:16px;"></i> View Attendance</button>
+                    </div>
                 </form>
             </div>
 
