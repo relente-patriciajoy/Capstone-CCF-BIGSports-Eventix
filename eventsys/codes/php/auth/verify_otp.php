@@ -14,23 +14,35 @@ if ($verification_type === 'registration' && !isset($_SESSION['pending_registrat
     header("Location: register.php"); exit();
 } elseif ($verification_type === 'login' && !isset($_SESSION['pending_login'])) {
     header("Location: index.php"); exit();
+} elseif ($verification_type === 'forgot_password' && !isset($_SESSION['forgot_email'])) {
+    header("Location: forgot_password.php"); exit();
 }
 
 $error          = "";
 $resend_message = "";
 
-$email = $verification_type === 'registration'
-    ? $_SESSION['pending_registration']['email']
-    : $_SESSION['pending_login']['email'];
+if ($verification_type === 'registration') {
+    $email = $_SESSION['pending_registration']['email'];
+} elseif ($verification_type === 'login') {
+    $email = $_SESSION['pending_login']['email'];
+} else {
+    $email = $_SESSION['forgot_email'];
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['verify_otp'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['otp_code'])) {
     $otp_input = trim($_POST['otp_code'] ?? '');
     if (empty($otp_input)) {
         $error = "Please enter the OTP code.";
     } elseif (strlen($otp_input) !== 6 || !ctype_digit($otp_input)) {
         $error = "Please enter a valid 6-digit OTP code.";
     } else {
-        $verification = verifyOTP($conn, $email, $otp_input, $verification_type);
+        // Map verification_type to the actual otp_type stored in DB
+        // forgot_password OTPs are stored as 'reset_password' (valid enum value)
+        $otp_type_for_verify = ($verification_type === 'forgot_password') ? 'reset_password' : $verification_type;
+        $verification = verifyOTP($conn, $email, $otp_input, $otp_type_for_verify);
+
+
+
         if ($verification['success']) {
             if ($verification_type === 'registration') {
                 $reg_data = $_SESSION['pending_registration'];
@@ -49,6 +61,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['verify_otp'])) {
                     header("Location: ../dashboard/home.php?welcome=1");
                     exit();
                 } else { $error = "Registration failed. Please try again."; }
+            } elseif ($verification_type === 'forgot_password') {
+                // OTP verified — allow password reset
+                $_SESSION['reset_verified'] = true;
+                unset($_SESSION['otp_id']);
+                header("Location: reset_password.php");
+                exit();
             } else {
                 $login_data = $_SESSION['pending_login'];
                 unset($_SESSION['pending_login'], $_SESSION['otp_id']);
@@ -69,16 +87,36 @@ if (isset($_POST['resend_otp'])) {
     if (!canRequestOTP($conn, $email)) {
         $resend_message = "Please wait before requesting another OTP.";
     } else {
+        // Get name + phone based on which flow we're in
         if ($verification_type === 'registration') {
             $user_data = $_SESSION['pending_registration'];
-            $name  = trim($user_data['first_name'] . ' ' . $user_data['last_name']);
-            $phone = $user_data['phone'];
+            $name      = trim($user_data['first_name'] . ' ' . $user_data['last_name']);
+            $phone     = $user_data['phone'];
+            $user_id_otp = null;
+        } elseif ($verification_type === 'forgot_password') {
+            // For forgot_password we stored user_id and email directly in session
+            $name      = $_SESSION['forgot_email']; // use email as fallback name
+            $phone     = '';                         // no phone needed — email only
+            $user_id_otp = $_SESSION['forgot_user_id'] ?? null;
+            // Look up real name and phone from DB
+            $u = $conn->prepare("SELECT CONCAT(first_name,' ',last_name) as name, phone FROM user WHERE user_id = ?");
+            if ($u && $user_id_otp) {
+                $u->bind_param("i", $user_id_otp);
+                $u->execute();
+                $ur = $u->get_result()->fetch_assoc();
+                if ($ur) { $name = $ur['name']; $phone = $ur['phone']; }
+                $u->close();
+            }
         } else {
-            $user_data = $_SESSION['pending_login'];
-            $name  = $user_data['full_name'];
-            $phone = $user_data['phone'];
+            $user_data   = $_SESSION['pending_login'];
+            $name        = $user_data['full_name'];
+            $phone       = $user_data['phone'];
+            $user_id_otp = $user_data['user_id'] ?? null;
         }
-        $otp_result = createOTP($conn, $email, $phone, null, $verification_type);
+
+        // Use 'reset_password' type (valid enum) for forgot_password flow
+        $otp_type_to_use = ($verification_type === 'forgot_password') ? 'reset_password' : $verification_type;
+        $otp_result = createOTP($conn, $email, $phone, $user_id_otp, $otp_type_to_use);
         if ($otp_result) {
             $delivery = sendOTPDual($email, $phone, $otp_result['otp_code'], $name);
             if ($delivery['email'] || $delivery['sms']) {
@@ -163,6 +201,8 @@ $conn->close();
                 </div>
             <?php endif; ?>
 
+
+
             <?php if (!empty($resend_message)): ?>
                 <div class="alert alert-success">
                     <i data-lucide="check-circle" style="width:17px;height:17px;"></i>
@@ -207,9 +247,15 @@ $conn->close();
             </div>
 
             <div class="auth-link">
-                <a href="<?= $verification_type === 'registration' ? 'register.php' : 'index.php' ?>">
-                    ← Back to <?= $verification_type === 'registration' ? 'Registration' : 'Login' ?>
-                </a>
+                <?php
+                if ($verification_type === 'registration') {
+                    echo '<a href="register.php">← Back to Registration</a>';
+                } elseif ($verification_type === 'forgot_password') {
+                    echo '<a href="forgot_password.php">← Back to Forgot Password</a>';
+                } else {
+                    echo '<a href="index.php">← Back to Login</a>';
+                }
+                ?>
             </div>
         </div>
     </div>
@@ -279,10 +325,22 @@ digitBoxes.forEach((box, idx) => {
     });
 });
 
-// Auto-submit when all 6 filled
-document.getElementById('otpForm').addEventListener('submit', function() {
-    verifyBtn.classList.add('loading');
-    verifyBtn.disabled = true;
+// On submit — re-confirm hidden field is populated, then allow form to POST
+document.getElementById('otpForm').addEventListener('submit', function(e) {
+    // Re-populate hidden field just before submit (safety net)
+    const val = Array.from(digitBoxes).map(d => d.value).join('');
+    hiddenInput.value = val;
+
+    if (val.length < 6) {
+        e.preventDefault();
+        return;
+    }
+
+    // Delay the loading state so the form data is captured first
+    setTimeout(() => {
+        verifyBtn.classList.add('loading');
+        verifyBtn.disabled = true;
+    }, 50);
 });
 
 // Auto-dismiss alerts
