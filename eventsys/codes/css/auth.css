@@ -1129,3 +1129,167 @@ input:focus-visible, .password-wrapper:focus-within { outline: none; }
     display: none; /* too cramped on small screens */
   }
 }
+
+/* ============================================
+   PASSWORD RESET — STEP INDICATOR
+   ============================================ */
+
+.reset-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.6rem;
+}
+
+.reset-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.reset-step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--off-white);
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.reset-step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.reset-step.active .reset-step-num {
+  background: var(--red);
+  border-color: var(--red);
+  color: white;
+}
+
+.reset-step.active .reset-step-label {
+  color: var(--red);
+}
+
+.reset-step.done .reset-step-num {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.reset-step.done .reset-step-label {
+  color: #059669;
+}
+
+.reset-step-line {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  margin-bottom: 18px;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.reset-step-line.done {
+  background: #10b981;
+}
+
+/* ============================================
+   CONFIRM PASSWORD MATCH HINT
+   ============================================ */
+
+.pw-match-hint {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 5px;
+  display: block;
+  transition: color 0.2s;
+}
+
+.pw-match-hint.match    { color: #059669; }
+.pw-match-hint.no-match { color: #ef4444; }
+
+/* ============================================
+   ACCOUNT RECOVERY LINK (forgot_password page)
+   ============================================ */
+
+.auth-recovery-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+
+.auth-recovery-link:hover {
+  color: var(--red);
+  border-color: rgba(230,57,70,0.35);
+  background: rgba(230,57,70,0.04);
+}
+
+/* ============================================
+   ACCOUNT RECOVERY SUCCESS STATE
+   ============================================ */
+
+.recovery-success {
+  text-align: center;
+}
+
+.recovery-success-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  color: #059669;
+}
+
+.recovery-success h2 { margin-bottom: 0.6rem; }
+.recovery-success p  { margin-bottom: 0; }
+
+/* Textarea in auth forms */
+.auth-form textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--off-white);
+  color: var(--black);
+  font-size: 0.88rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.auth-form textarea:focus {
+  outline: none;
+  border-color: var(--red);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(230,57,70,0.1);
+}
