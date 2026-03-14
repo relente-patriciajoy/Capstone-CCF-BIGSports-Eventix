@@ -810,10 +810,12 @@
     max-width: 240px;
   }
 
+  /* Sidebar is a floating overlay on tablet — content takes full width */
   .management-content {
-    margin-left: 240px;
-    width: calc(100% - 240px);
+    margin-left: 0;
+    width: 100%;
     padding: 24px;
+    padding-top: 72px; /* clear the floating hamburger */
   }
 
   .stats-row { grid-template-columns: repeat(2, 1fr); gap: 16px; }
