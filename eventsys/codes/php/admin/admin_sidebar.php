@@ -50,6 +50,16 @@
         <a href="../admin/user_promotions.php"       class="<?= basename($_SERVER['PHP_SELF']) === 'user_promotions.php'       ? 'active' : '' ?>">
             <i data-lucide="user-plus"></i> Promote Users
         </a>
+        <a href="../admin/admin_recovery_requests.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_recovery_requests.php' ? 'active' : '' ?>">
+            <i data-lucide="life-buoy"></i> Recovery Requests
+            <?php
+            // Badge for pending requests
+            if (isset($conn) || (include_once('../../includes/db.php'))) {
+                $rq = $conn->query("SELECT COUNT(*) as c FROM account_recovery_request WHERE status='pending'");
+                if ($rq) { $rc = $rq->fetch_assoc()['c']; if ($rc > 0) echo "<span style='background:#e63946;color:white;border-radius:20px;font-size:0.7rem;padding:2px 7px;margin-left:auto;'>$rc</span>"; }
+            }
+            ?>
+        </a>
         <a href="../admin/backup_restore.php">
             <i data-lucide="database"></i> Backup &amp; Restore
         </a>
@@ -85,9 +95,9 @@
         sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar();
     }
 
-    if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleSidebar);
+    if (hamburgerBtn)    hamburgerBtn.addEventListener('click', toggleSidebar);
     if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
-    if (overlay) overlay.addEventListener('click', closeSidebar);
+    if (overlay)         overlay.addEventListener('click', closeSidebar);
 
     sidebar.querySelectorAll('nav a').forEach(link => {
         link.addEventListener('click', () => { if (window.innerWidth <= 1023) closeSidebar(); });
