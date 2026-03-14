@@ -939,3 +939,193 @@ input:focus-visible, .password-wrapper:focus-within { outline: none; }
 
 ::selection { background: var(--red); color: white; }
 * { -webkit-tap-highlight-color: transparent; }
+
+/* ============================================
+   GENDER SELECTOR
+   ============================================ */
+
+.gender-row {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+.gender-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--off-white);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray);
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+}
+
+/* Hide the raw radio input */
+.gender-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.gender-icon {
+  display: flex;
+  align-items: center;
+  color: var(--gray);
+  transition: color 0.2s ease;
+}
+
+.gender-option:hover {
+  border-color: rgba(230, 57, 70, 0.4);
+  background: white;
+  color: var(--black);
+}
+
+.gender-option.selected {
+  border-color: var(--red);
+  background: rgba(230, 57, 70, 0.05);
+  color: var(--red);
+}
+
+.gender-option.selected .gender-icon {
+  color: var(--red);
+}
+
+/* ============================================
+   PASSWORD STRENGTH METER
+   ============================================ */
+
+.pw-strength {
+  display: none;           /* hidden until user types */
+  margin-top: 0.6rem;
+}
+
+.pw-strength.visible {
+  display: block;
+}
+
+/* Progress track */
+.pw-strength-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--light-gray);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+
+/* Fill — width set by JS */
+.pw-strength-fill {
+  height: 100%;
+  border-radius: 6px;
+  width: 0%;
+  transition: width 0.35s ease, background-color 0.35s ease;
+}
+
+.pw-strength-fill.weak    { background: #ef4444; }
+.pw-strength-fill.average { background: #f59e0b; }
+.pw-strength-fill.strong  { background: #10b981; }
+
+/* Label + hint row */
+.pw-strength-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.pw-strength-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pw-strength-label.weak    { color: #ef4444; }
+.pw-strength-label.average { color: #f59e0b; }
+.pw-strength-label.strong  { color: #10b981; }
+
+.pw-strength-hint {
+  font-size: 0.72rem;
+  color: var(--gray);
+  text-align: right;
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* Checklist rules */
+.pw-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 0.5rem;
+}
+
+.pw-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  color: var(--gray);
+  transition: color 0.2s ease;
+}
+
+.pw-rule-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+/* Met state — green dot, green text */
+.pw-rule.met {
+  color: #059669;
+}
+
+.pw-rule.met .pw-rule-dot {
+  background: #10b981;
+}
+
+/* Unmet state — red dot, slightly dimmer text */
+.pw-rule.unmet {
+  color: #9ca3af;
+}
+
+.pw-rule.unmet .pw-rule-dot {
+  background: #fca5a5;
+}
+
+/* ============================================
+   RESPONSIVE — gender + strength meter
+   ============================================ */
+
+@media (max-width: 480px) {
+  .gender-option {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.82rem;
+    gap: 0.4rem;
+  }
+
+  .pw-rules {
+    grid-template-columns: 1fr;
+  }
+
+  .pw-strength-hint {
+    display: none; /* too cramped on small screens */
+  }
+}

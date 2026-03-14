@@ -34,8 +34,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['verify_otp'])) {
         if ($verification['success']) {
             if ($verification_type === 'registration') {
                 $reg_data = $_SESSION['pending_registration'];
-                $stmt = $conn->prepare("INSERT INTO user (first_name, middle_name, last_name, email, phone, password, role, status, email_verified, phone_verified) VALUES (?, ?, ?, ?, ?, ?, 'user', 'active', 1, 1)");
-                $stmt->bind_param("ssssss", $reg_data['first_name'], $reg_data['middle_name'], $reg_data['last_name'], $reg_data['email'], $reg_data['phone'], $reg_data['password']);
+                $stmt = $conn->prepare("INSERT INTO user (first_name, middle_name, last_name, gender, email, phone, password, role, status, email_verified, phone_verified) VALUES (?, ?, ?, ?, ?, ?, ?, 'user', 'active', 1, 1)");
+                $stmt->bind_param("sssssss", $reg_data['first_name'], $reg_data['middle_name'], $reg_data['last_name'], $reg_data['gender'], $reg_data['email'], $reg_data['phone'], $reg_data['password']);
                 if ($stmt->execute()) {
                     $user_id = $stmt->insert_id;
                     unset($_SESSION['pending_registration'], $_SESSION['otp_id']);
