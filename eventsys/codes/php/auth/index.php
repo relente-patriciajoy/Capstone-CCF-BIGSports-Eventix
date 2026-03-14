@@ -5,7 +5,8 @@
  */
 session_start();
 
-$just_logged_out = isset($_SESSION['just_logged_out']);
+$just_logged_out  = isset($_SESSION['just_logged_out']);
+$password_reset   = isset($_GET['reset']) && $_GET['reset'] === 'success';
 if ($just_logged_out) unset($_SESSION['just_logged_out']);
 
 if (isset($_SESSION['user_id']) && !$just_logged_out) {
@@ -158,6 +159,13 @@ $conn->close();
                 <div class="alert alert-success">
                     <i data-lucide="check-circle" style="width:17px;height:17px;"></i>
                     You have been successfully logged out.
+                </div>
+            <?php endif; ?>
+
+            <?php if ($password_reset): ?>
+                <div class="alert alert-success">
+                    <i data-lucide="check-circle" style="width:17px;height:17px;"></i>
+                    <div><strong>Password reset successful!</strong> You can now sign in with your new password.</div>
                 </div>
             <?php endif; ?>
 
