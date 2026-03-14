@@ -105,7 +105,16 @@ $conn->close();
 
 <!-- ── LEFT BRAND PANEL (desktop) ── -->
 <div class="auth-brand">
+    <div class="auth-brand-tint"></div>
+    <div class="auth-brand-slides">
+        <div class="auth-brand-slide active" style="background-image:url('../../assets/highlights/soccer-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/volleyball-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/badminton-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/pickleball-sport.jpg')"></div>
+    </div>
+    <div class="auth-brand-overlay"></div>
     <div class="auth-brand-pattern"></div>
+
     <div class="auth-brand-content">
         <img src="../../assets/eventix-logo.png" alt="Eventix" class="auth-brand-logo">
         <h2 class="auth-brand-title">One Last Step</h2>
@@ -116,8 +125,16 @@ $conn->close();
             <span class="auth-brand-pill"><i data-lucide="clock" style="width:13px;height:13px;"></i> 5 min expiry</span>
         </div>
     </div>
+
+    <div class="auth-brand-dots">
+        <span class="auth-brand-dot active"></span>
+        <span class="auth-brand-dot"></span>
+        <span class="auth-brand-dot"></span>
+        <span class="auth-brand-dot"></span>
+    </div>
+
     <div class="auth-brand-quote">
-        <p>Code expires in 5 minutes. Check spam if not received.</p>
+        <p>Code expires in 5 minutes. Check your spam folder if not received.</p>
     </div>
 </div>
 
@@ -200,6 +217,23 @@ $conn->close();
 
 <script>
 lucide.createIcons();
+
+// ── Left panel image carousel ──
+(function() {
+    const slides = document.querySelectorAll('.auth-brand-slide');
+    const dots   = document.querySelectorAll('.auth-brand-dot');
+    if (!slides.length) return;
+    let cur = 0;
+    function goTo(idx) {
+        slides[cur].classList.remove('active');
+        dots[cur].classList.remove('active');
+        cur = (idx + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        dots[cur].classList.add('active');
+    }
+    dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+    setInterval(() => goTo(cur + 1), 4500);
+})();
 
 // ── OTP digit-box logic ──
 const digitBoxes = document.querySelectorAll('.otp-digit');

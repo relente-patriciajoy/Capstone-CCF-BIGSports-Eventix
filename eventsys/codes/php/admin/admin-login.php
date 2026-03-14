@@ -101,8 +101,18 @@ $conn->close();
 <body class="auth-page">
 
 <!-- ── LEFT BRAND PANEL (desktop) ── -->
-<div class="auth-brand" style="background: linear-gradient(145deg, #0d0d0d 0%, #1a1a1a 50%, #2d0000 100%);">
+<div class="auth-brand">
+    <div class="auth-brand-tint"></div>
+    <div class="auth-brand-slides">
+        <div class="auth-brand-slide active" style="background-image:url('../../assets/highlights/soccer-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/volleyball-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/badminton-sport.jpg')"></div>
+        <div class="auth-brand-slide" style="background-image:url('../../assets/highlights/pickleball-sport.jpg')"></div>
+    </div>
+    <!-- Darker overlay for admin panel -->
+    <div class="auth-brand-overlay" style="background:linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.35) 40%,rgba(0,0,0,0.72) 70%,rgba(0,0,0,0.92) 100%);"></div>
     <div class="auth-brand-pattern"></div>
+
     <div class="auth-brand-content">
         <img src="../../assets/eventix-logo.png" alt="Eventix" class="auth-brand-logo">
         <h2 class="auth-brand-title">Administrator Access</h2>
@@ -113,6 +123,14 @@ $conn->close();
             <span class="auth-brand-pill"><i data-lucide="bar-chart-2" style="width:13px;height:13px;"></i> Analytics</span>
         </div>
     </div>
+
+    <div class="auth-brand-dots">
+        <span class="auth-brand-dot active"></span>
+        <span class="auth-brand-dot"></span>
+        <span class="auth-brand-dot"></span>
+        <span class="auth-brand-dot"></span>
+    </div>
+
     <div class="auth-brand-quote">
         <p>Restricted access — authorized administrators only</p>
     </div>
@@ -197,6 +215,23 @@ $conn->close();
 
 <script>
 lucide.createIcons();
+
+// ── Left panel image carousel ──
+(function() {
+    const slides = document.querySelectorAll('.auth-brand-slide');
+    const dots   = document.querySelectorAll('.auth-brand-dot');
+    if (!slides.length) return;
+    let cur = 0;
+    function goTo(idx) {
+        slides[cur].classList.remove('active');
+        dots[cur].classList.remove('active');
+        cur = (idx + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        dots[cur].classList.add('active');
+    }
+    dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+    setInterval(() => goTo(cur + 1), 4500);
+})();
 
 function togglePassword(fieldId, iconId) {
     const field = document.getElementById(fieldId);
