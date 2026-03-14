@@ -1258,27 +1258,7 @@ section { scroll-margin-top: 76px; }
    ============================================ */
 
 @media (min-width: 768px) {
-  /* Nav */
-  .mobile-menu-btn { display: none; }
-
-  .nav-links {
-    position: static;
-    width: auto; height: auto;
-    flex-direction: row;
-    padding: 0;
-    gap: 0.3rem;
-    background: transparent;
-    box-shadow: none;
-    overflow-y: visible;
-  }
-
-  .nav-links a {
-    font-size: 0.92rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: 8px;
-  }
-
-  .nav-cta { display: inline-flex; }
+  /* Nav stays as hamburger/drawer on tablet — only layout changes below */
 
   /* Hero */
   .hero { padding: 8rem 5% 5rem; }
@@ -1328,6 +1308,28 @@ section { scroll-margin-top: 76px; }
    ============================================ */
 
 @media (min-width: 1024px) {
+  /* Nav switches to full horizontal desktop mode at 1024px */
+  .mobile-menu-btn { display: none; }
+
+  .nav-links {
+    position: static;
+    width: auto; height: auto;
+    flex-direction: row;
+    padding: 0;
+    gap: 0.3rem;
+    background: transparent;
+    box-shadow: none;
+    overflow-y: visible;
+  }
+
+  .nav-links a {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+  }
+
+  .nav-cta { display: inline-flex; }
+
   .hero-title { font-size: 5rem; }
   .hero-subtitle { font-size: 1.15rem; }
 
