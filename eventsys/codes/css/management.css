@@ -484,9 +484,9 @@
   border-radius: 2px;
 }
 
-/* Sidebar Close Button */
+/* Sidebar Close Button — hidden; overlay click closes sidebar */
 .sidebar-close {
-  display: none;
+  display: none !important;
   position: absolute;
   top: 16px;
   right: 16px;
@@ -715,17 +715,11 @@
   /* Keep sidebar logo visible — it's the only title inside the panel */
   .sidebar .logo {
     display: block;
-    padding: 20px 60px 20px 20px; /* right padding for close button */
+    padding: 20px;
     font-size: 1.4rem;
   }
 
-  /* Close button top-right inside sidebar */
-  .sidebar-close {
-    display: flex;
-    position: absolute;
-    top: 16px;
-    right: 16px;
-  }
+  .sidebar-close { display: none !important; }
 
   .sidebar {
     transform: translateX(-100%);
@@ -793,16 +787,11 @@
 
   .sidebar .logo {
     display: block;
-    padding: 20px 60px 20px 20px;
+    padding: 20px;
     font-size: 1.4rem;
   }
 
-  .sidebar-close {
-    display: flex;
-    position: absolute;
-    top: 16px;
-    right: 16px;
-  }
+  .sidebar-close { display: none !important; }
 
   .sidebar {
     width: 240px;
