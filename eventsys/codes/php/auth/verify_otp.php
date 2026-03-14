@@ -1,7 +1,6 @@
 <?php
 /**
  * OTP Verification Page
- * Handles verification for registration and login
  */
 session_start();
 
@@ -9,142 +8,86 @@ require_once('../../includes/db.php');
 require_once __DIR__ . '/../../includes/otp_function.php';
 require_once __DIR__ . '/../../includes/device_recognition.php';
 
-// Check if verification type is set
 $verification_type = $_GET['type'] ?? 'registration';
 
-// Check if there's pending registration/login data
 if ($verification_type === 'registration' && !isset($_SESSION['pending_registration'])) {
-    header("Location: register.php");
-    exit();
+    header("Location: register.php"); exit();
 } elseif ($verification_type === 'login' && !isset($_SESSION['pending_login'])) {
-    header("Location: index.php");
-    exit();
+    header("Location: index.php"); exit();
 }
 
-$error = "";
-$success = "";
+$error          = "";
 $resend_message = "";
 
-// Get email from session
 $email = $verification_type === 'registration'
     ? $_SESSION['pending_registration']['email']
     : $_SESSION['pending_login']['email'];
 
-// Handle OTP verification
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['verify_otp'])) {
     $otp_input = trim($_POST['otp_code'] ?? '');
-
     if (empty($otp_input)) {
         $error = "Please enter the OTP code.";
     } elseif (strlen($otp_input) !== 6 || !ctype_digit($otp_input)) {
         $error = "Please enter a valid 6-digit OTP code.";
     } else {
-        // Verify OTP
         $verification = verifyOTP($conn, $email, $otp_input, $verification_type);
-        
         if ($verification['success']) {
             if ($verification_type === 'registration') {
-                // Complete registration
                 $reg_data = $_SESSION['pending_registration'];
-
                 $stmt = $conn->prepare("INSERT INTO user (first_name, middle_name, last_name, email, phone, password, role, status, email_verified, phone_verified) VALUES (?, ?, ?, ?, ?, ?, 'user', 'active', 1, 1)");
-
-                $stmt->bind_param("ssssss",
-                    $reg_data['first_name'],
-                    $reg_data['middle_name'],
-                    $reg_data['last_name'],
-                    $reg_data['email'],
-                    $reg_data['phone'],
-                    $reg_data['password']
-                );
-
+                $stmt->bind_param("ssssss", $reg_data['first_name'], $reg_data['middle_name'], $reg_data['last_name'], $reg_data['email'], $reg_data['phone'], $reg_data['password']);
                 if ($stmt->execute()) {
                     $user_id = $stmt->insert_id;
-
-                    // Clear pending registration
-                    unset($_SESSION['pending_registration']);
-                    unset($_SESSION['otp_id']);
-
-                    // Auto-login after registration
-                    $_SESSION['user_id'] = $user_id;
-                    $_SESSION['full_name'] = trim($reg_data['first_name'] . ' ' . $reg_data['last_name']);
-                    $_SESSION['role'] = 'user';
-                    $_SESSION['email'] = $reg_data['email'];
+                    unset($_SESSION['pending_registration'], $_SESSION['otp_id']);
+                    $_SESSION['user_id']    = $user_id;
+                    $_SESSION['full_name']  = trim($reg_data['first_name'] . ' ' . $reg_data['last_name']);
+                    $_SESSION['role']       = 'user';
+                    $_SESSION['email']      = $reg_data['email'];
                     $_SESSION['login_time'] = time();
-
-                    // Trust device for new registrations (30 days)
                     trustDevice($conn, $user_id, 30);
-
                     $stmt->close();
                     header("Location: ../dashboard/home.php?welcome=1");
                     exit();
-                } else {
-                    $error = "Registration failed. Please try again.";
-                }
+                } else { $error = "Registration failed. Please try again."; }
             } else {
-                // Complete login
                 $login_data = $_SESSION['pending_login'];
-
-                // Clear pending login
-                unset($_SESSION['pending_login']);
-                unset($_SESSION['otp_id']);
-
-                // Set session variables
-                $_SESSION['user_id'] = $login_data['user_id'];
-                $_SESSION['full_name'] = $login_data['full_name'];
-                $_SESSION['role'] = $login_data['role'];
-                $_SESSION['email'] = $login_data['email'];
+                unset($_SESSION['pending_login'], $_SESSION['otp_id']);
+                $_SESSION['user_id']    = $login_data['user_id'];
+                $_SESSION['full_name']  = $login_data['full_name'];
+                $_SESSION['role']       = $login_data['role'];
+                $_SESSION['email']      = $login_data['email'];
                 $_SESSION['login_time'] = time();
-
-                // ===== TRUST DEVICE AFTER SUCCESSFUL OTP =====
-                if ($login_data['remember']) {
-                    trustDevice($conn, $login_data['user_id'], 30); // Remember for 30 days
-                }
-                // ===== END TRUST DEVICE =====
-
+                if ($login_data['remember']) trustDevice($conn, $login_data['user_id'], 30);
                 header("Location: ../dashboard/home.php");
                 exit();
             }
-        } else {
-            $error = $verification['message'];
-        }
+        } else { $error = $verification['message']; }
     }
 }
 
-// Handle resend OTP
 if (isset($_POST['resend_otp'])) {
     if (!canRequestOTP($conn, $email)) {
         $resend_message = "Please wait before requesting another OTP.";
     } else {
-        // Get user data
         if ($verification_type === 'registration') {
             $user_data = $_SESSION['pending_registration'];
-            $name = trim($user_data['first_name'] . ' ' . $user_data['last_name']);
+            $name  = trim($user_data['first_name'] . ' ' . $user_data['last_name']);
             $phone = $user_data['phone'];
         } else {
             $user_data = $_SESSION['pending_login'];
-            $name = $user_data['full_name'];
+            $name  = $user_data['full_name'];
             $phone = $user_data['phone'];
         }
-
-        // Generate new OTP
         $otp_result = createOTP($conn, $email, $phone, null, $verification_type);
-
         if ($otp_result) {
             $delivery = sendOTPDual($email, $phone, $otp_result['otp_code'], $name);
-            
             if ($delivery['email'] || $delivery['sms']) {
                 $_SESSION['otp_id'] = $otp_result['otp_id'];
-                $resend_message = "New OTP code has been sent!";
-            } else {
-                $resend_message = "Failed to send OTP. Please try again.";
-            }
-        } else {
-            $resend_message = "Failed to generate OTP. Please try again.";
-        }
+                $resend_message = "New OTP code sent!";
+            } else { $resend_message = "Failed to send OTP. Please try again."; }
+        } else { $resend_message = "Failed to generate OTP. Please try again."; }
     }
 }
-
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -152,108 +95,171 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP - Eventix</title>
+    <title>Verify OTP — Eventix</title>
     <link rel="icon" type="image/png" href="../../assets/eventix-logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../css/auth.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="auth-page">
 
-<div class="auth-container">
-    <div class="auth-box">
-        <img src="../../assets/eventix-logo.png" alt="Eventix Logo" class="logo" />
-        
-        <h2>Verify Your Identity</h2>
-        <p>We've sent a 6-digit code to:<br><strong><?php echo htmlspecialchars($email); ?></strong></p>
-        <p style="font-size: 0.9rem; color: #6b6b6b;">Check your email and SMS messages</p>
+<!-- ── LEFT BRAND PANEL (desktop) ── -->
+<div class="auth-brand">
+    <div class="auth-brand-pattern"></div>
+    <div class="auth-brand-content">
+        <img src="../../assets/eventix-logo.png" alt="Eventix" class="auth-brand-logo">
+        <h2 class="auth-brand-title">One Last Step</h2>
+        <p class="auth-brand-subtitle">We sent a 6-digit code to verify your identity. Check your email and SMS messages.</p>
+        <div class="auth-brand-pills">
+            <span class="auth-brand-pill"><i data-lucide="mail" style="width:13px;height:13px;"></i> Email</span>
+            <span class="auth-brand-pill"><i data-lucide="smartphone" style="width:13px;height:13px;"></i> SMS</span>
+            <span class="auth-brand-pill"><i data-lucide="clock" style="width:13px;height:13px;"></i> 5 min expiry</span>
+        </div>
+    </div>
+    <div class="auth-brand-quote">
+        <p>Code expires in 5 minutes. Check spam if not received.</p>
+    </div>
+</div>
 
-        <?php if (!empty($error)): ?>
-            <div class="alert alert-error">
-                <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
+<!-- ── RIGHT FORM PANEL ── -->
+<div class="auth-form-panel">
+    <div class="auth-container">
+        <div class="auth-box">
 
-        <?php if (!empty($resend_message)): ?>
-            <div class="alert alert-success">
-                <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
-                <?php echo htmlspecialchars($resend_message); ?>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST" action="" class="auth-form">
-            <div class="input-group">
-                <label for="otp_code">Enter 6-Digit Code</label>
-                <input
-                    type="text"
-                    id="otp_code"
-                    name="otp_code"
-                    maxlength="6"
-                    pattern="[0-9]{6}"
-                    placeholder="000000"
-                    required
-                    autofocus
-                    style="text-align: center; font-size: 1.5rem; letter-spacing: 8px; font-weight: 600;"
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                >
+            <!-- Mobile brand strip -->
+            <div class="auth-mobile-brand">
+                <img src="../../assets/eventix-logo.png" alt="Eventix">
+                <div class="auth-mobile-brand-text">
+                    <span class="auth-mobile-brand-name">CCF Alabang</span>
+                    <span class="auth-mobile-brand-sub">Eventix</span>
+                </div>
             </div>
 
-            <button type="submit" name="verify_otp" class="auth-button">
-                Verify Code
-            </button>
-        </form>
+            <img src="../../assets/eventix-logo.png" alt="Eventix Logo" class="auth-logo">
+            <h2>Verify Your Identity</h2>
+            <p>We sent a 6-digit code to<br><strong><?= htmlspecialchars($email) ?></strong></p>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <p style="color: #6b6b6b; font-size: 0.9rem;">
-                Didn't receive the code?
-            </p>
-            <form method="POST" action="" style="display: inline;">
-                <button
-                    type="submit"
-                    name="resend_otp"
-                    class="auth-button button-outline"
-                    style="margin-top: 10px;"
-                >
-                    Resend OTP
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-error">
+                    <i data-lucide="alert-circle" style="width:17px;height:17px;"></i>
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($resend_message)): ?>
+                <div class="alert alert-success">
+                    <i data-lucide="check-circle" style="width:17px;height:17px;"></i>
+                    <?= htmlspecialchars($resend_message) ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="" class="auth-form" id="otpForm">
+                <div class="input-group">
+                    <label>Enter 6-Digit Code</label>
+                    <!-- Individual digit boxes — better mobile UX -->
+                    <div class="otp-input-row">
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code" autofocus>
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                        <input type="tel" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                    </div>
+                    <!-- Hidden field that gets combined value -->
+                    <input type="hidden" name="otp_code" id="otp_code">
+                </div>
+
+                <button type="submit" name="verify_otp" class="auth-button" id="verifyBtn" disabled>
+                    <i data-lucide="check-circle" style="width:17px;height:17px;"></i>
+                    Verify Code
                 </button>
             </form>
-        </div>
 
-        <div class="auth-link" style="margin-top: 30px;">
-            <a href="<?php echo $verification_type === 'registration' ? 'register.php' : 'index.php'; ?>">
-                ← Back to <?php echo $verification_type === 'registration' ? 'Registration' : 'Login'; ?>
-            </a>
-        </div>
+            <div class="otp-resend">
+                <p>Didn't receive the code?</p>
+                <form method="POST" action="">
+                    <button type="submit" name="resend_otp" class="auth-button button-outline">
+                        <i data-lucide="refresh-cw" style="width:15px;height:15px;"></i>
+                        Resend OTP
+                    </button>
+                </form>
+            </div>
 
-        <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px; font-size: 0.85rem; color: #666;">
-            <p style="margin: 0;"><strong>Note:</strong> OTP expires in 5 minutes</p>
+            <div class="otp-note">
+                <strong>Note:</strong> OTP expires in 5 minutes. Check your spam folder if not received.
+            </div>
+
+            <div class="auth-link">
+                <a href="<?= $verification_type === 'registration' ? 'register.php' : 'index.php' ?>">
+                    ← Back to <?= $verification_type === 'registration' ? 'Registration' : 'Login' ?>
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    lucide.createIcons();
+lucide.createIcons();
 
-    // Auto-submit when 6 digits entered
-    const otpInput = document.getElementById('otp_code');
-    otpInput.addEventListener('input', function() {
-        if (this.value.length === 6) {
-            // Optional: auto-submit
-            // this.form.submit();
+// ── OTP digit-box logic ──
+const digitBoxes = document.querySelectorAll('.otp-digit');
+const hiddenInput = document.getElementById('otp_code');
+const verifyBtn   = document.getElementById('verifyBtn');
+
+function updateHidden() {
+    const val = Array.from(digitBoxes).map(d => d.value).join('');
+    hiddenInput.value = val;
+    verifyBtn.disabled = val.length < 6;
+    digitBoxes.forEach(d => d.classList.toggle('filled', d.value !== ''));
+}
+
+digitBoxes.forEach((box, idx) => {
+    box.addEventListener('input', function() {
+        // Allow only digits
+        this.value = this.value.replace(/[^0-9]/g, '').slice(-1);
+        updateHidden();
+        // Move to next box
+        if (this.value && idx < digitBoxes.length - 1) {
+            digitBoxes[idx + 1].focus();
         }
     });
 
-    // Auto-dismiss alerts
-    setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-10px)';
-            setTimeout(() => alert.remove(), 300);
-        });
-    }, 5000);
-</script>
+    box.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && idx > 0) {
+            digitBoxes[idx - 1].focus();
+            digitBoxes[idx - 1].value = '';
+            updateHidden();
+        }
+    });
 
+    // Handle paste (e.g. from SMS)
+    box.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'');
+        pasted.split('').slice(0, 6).forEach((char, i) => {
+            if (digitBoxes[i]) digitBoxes[i].value = char;
+        });
+        updateHidden();
+        const lastFilled = Math.min(pasted.length, digitBoxes.length - 1);
+        digitBoxes[lastFilled].focus();
+    });
+});
+
+// Auto-submit when all 6 filled
+document.getElementById('otpForm').addEventListener('submit', function() {
+    verifyBtn.classList.add('loading');
+    verifyBtn.disabled = true;
+});
+
+// Auto-dismiss alerts
+setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+        a.style.transition = 'opacity 0.3s, transform 0.3s';
+        a.style.opacity = '0';
+        a.style.transform = 'translateY(-8px)';
+        setTimeout(() => a.remove(), 320);
+    });
+}, 5000);
+</script>
 </body>
 </html>
