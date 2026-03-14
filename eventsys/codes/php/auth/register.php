@@ -383,9 +383,9 @@ function togglePassword(fieldId, iconId) {
     lucide.createIcons();
 }
 
-// ── Strip numbers from name fields ──
+// ── Name fields: allow letters, spaces, hyphens, apostrophes, dots only ──
 function stripNumbers(input) {
-    input.value = input.value.replace(/[0-9]/g, '');
+    input.value = input.value.replace(/[^a-zA-Z\s\-'\.]/g, '');
 }
 
 // ── Phone: digits only, max 11, must start 09 ──
