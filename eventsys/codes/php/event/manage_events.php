@@ -293,12 +293,19 @@ $events = $stmt->get_result();
                         $can_edit = canAccessEvent($conn, $user_id, $row['event_id'], 'edit');
                         $can_delete = canAccessEvent($conn, $user_id, $row['event_id'], 'delete');
                     ?>
-                        <div class="event-card">
+                        <div class="event-card" style="display:flex;flex-direction:column;">
                             <h3><?= htmlspecialchars($row['title']) ?></h3>
                             <p><i data-lucide="map-pin"></i><strong>Venue:</strong> <?= htmlspecialchars($row['venue']) ?></p>
-                            <p><i data-lucide="calendar"></i><strong>From:</strong> <?= $row['start_time'] ?></p>
-                            <p><i data-lucide="clock"></i><strong>To:</strong> <?= $row['end_time'] ?></p>
-                            <div class="event-actions">
+                            <?php
+                            $start    = strtotime($row['start_time']);
+                            $end      = strtotime($row['end_time']);
+                            $same_day = date('Y-m-d', $start) === date('Y-m-d', $end);
+                            $date_str = $same_day
+                                ? date('F j, Y', $start) . ' · ' . date('g:i A', $start) . ' – ' . date('g:i A', $end)
+                                : date('F j, Y', $start) . ' – ' . date('F j, Y', $end);
+                            ?>
+                            <p><i data-lucide="calendar"></i><strong>Date:</strong> <?= $date_str ?></p>
+                            <div class="event-actions" style="margin-top:auto;padding-top:12px;">
                                 <?php if ($can_edit): ?>
                                     <a href="manage_events.php?edit=<?= $row['event_id'] ?>" class="edit-link"><i data-lucide="edit"></i> Edit</a>
                                 <?php else: ?>
