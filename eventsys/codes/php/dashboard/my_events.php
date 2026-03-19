@@ -114,7 +114,15 @@ $result = $stmt->get_result();
 
                 <h3><?= htmlspecialchars($row['title']) ?></h3>
                 <p><strong>Venue:</strong> <?= htmlspecialchars($row['venue']) ?></p>
-                <p><strong>Date:</strong> <?= $row['start_time'] ?> – <?= $row['end_time'] ?></p>
+                <?php
+                $start    = strtotime($row['start_time']);
+                $end      = strtotime($row['end_time']);
+                $same_day = date('Y-m-d', $start) === date('Y-m-d', $end);
+                $date_str = $same_day
+                    ? date('F j, Y', $start) . ' · ' . date('g:i A', $start) . ' – ' . date('g:i A', $end)
+                    : date('F j', $start) . ' – ' . date('F j, Y', $end);
+                ?>
+                <p><strong>Date:</strong> <?= $date_str ?></p>
                 <p><strong>Table Number:</strong> <?= $row['table_number'] ?></p>
                 <p>
                     <strong>Status:</strong>

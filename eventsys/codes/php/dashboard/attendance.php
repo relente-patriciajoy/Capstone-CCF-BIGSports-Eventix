@@ -192,9 +192,17 @@ $result = $stmt->get_result();
                  data-title="<?= strtolower(htmlspecialchars($row['title'])) ?>">
 
                 <h3><?= htmlspecialchars($row['title']) ?></h3>
-                <p><strong>Event Time:</strong><br><?= $row['start_time'] ?> → <?= $row['end_time'] ?></p>
-                <p><strong>Checked In:</strong> <?= $row['check_in_time'] ?? 'Not yet' ?></p>
-                <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ?? 'Not yet' ?></p>
+                <?php
+                $start    = strtotime($row['start_time']);
+                $end      = strtotime($row['end_time']);
+                $same_day = date('Y-m-d', $start) === date('Y-m-d', $end);
+                $date_str = $same_day
+                    ? date('F j, Y', $start) . ' · ' . date('g:i A', $start) . ' – ' . date('g:i A', $end)
+                    : date('F j', $start) . ' – ' . date('F j, Y', $end);
+                ?>
+                <p><strong>Event Time:</strong><br><?= $date_str ?></p>
+                <p><strong>Checked In:</strong> <?= $row['check_in_time'] ? date('M j, Y · g:i A', strtotime($row['check_in_time'])) : 'Not yet' ?></p>
+                <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ? date('M j, Y · g:i A', strtotime($row['check_out_time'])) : 'Not yet' ?></p>
                 <p><strong>Status:</strong> <?= $row['status'] ?? 'absent' ?></p>
 
                 <?php if ($missed_checkout): ?>
