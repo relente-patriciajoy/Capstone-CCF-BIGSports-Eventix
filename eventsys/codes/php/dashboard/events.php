@@ -49,6 +49,43 @@ $result = $conn->query($query);
   <?php endif; ?>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+    /* ── Card button alignment — button always sticks to bottom ── */
+    #events-grid .card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #events-grid .card form,
+    #events-grid .card .btn-register-closed {
+        margin-top: auto;
+    }
+
+    #events-grid .card form button,
+    #events-grid .card .btn-register-closed {
+        width: 100%;
+    }
+
+    /* ── Event description — Facebook-style inline See more ── */
+    .event-desc {
+        font-size: 0.88rem;
+        color: #555;
+        line-height: 1.6;
+        margin: 4px 0 8px;
+    }
+
+    .event-see-more,
+    .event-see-less {
+        color: var(--maroon, #800020);
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .event-see-more:hover,
+    .event-see-less:hover { text-decoration: underline; }
+    </style>
 </head>
 
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
@@ -123,10 +160,36 @@ $result = $conn->query($query);
             <?php endif; ?>
 
             <p><strong>Venue:</strong> <?= htmlspecialchars($row['venue']) ?></p>
-            <p><strong>Date:</strong> <?= $row['start_time'] ?> – <?= $row['end_time'] ?></p>
-            <p><strong>Price:</strong> $<?= number_format($row['price'], 2) ?></p>
+            <?php
+            $start     = strtotime($row['start_time']);
+            $end       = strtotime($row['end_time']);
+            $same_day  = date('Y-m-d', $start) === date('Y-m-d', $end);
+            if ($same_day) {
+                // e.g. April 24, 2026 · 7:30 PM – 9:30 PM
+                $date_str = date('F j, Y', $start) . ' · ' . date('g:i A', $start) . ' – ' . date('g:i A', $end);
+            } else {
+                // e.g. May 16 – May 16, 2026
+                $date_str = date('F j', $start) . ' – ' . date('F j, Y', $end);
+            }
+            ?>
+            <p><strong>Date:</strong> <?= $date_str ?></p>
             <p><strong>Available:</strong> <?= htmlspecialchars($row['available_seats']) ?> seats</p>
-            <p><?= nl2br(htmlspecialchars($row['description'])) ?></p>
+            <?php
+            $desc    = htmlspecialchars($row['description'] ?? '');
+            $limit   = 80;
+            $is_long = mb_strlen($desc) > $limit;
+            $short   = $is_long ? mb_substr($desc, 0, $limit) : $desc;
+            $desc_id = 'desc-' . $row['event_id'];
+            ?>
+            <?php if ($desc): ?>
+            <p class="event-desc" id="<?= $desc_id ?>">
+                <?php if ($is_long): ?>
+                    <span class="event-desc-short"><?= $short ?>... <span class="event-see-more" onclick="toggleDesc('<?= $desc_id ?>')">See more</span></span><span class="event-desc-full" style="display:none;"><?= $desc ?> <span class="event-see-less" onclick="toggleDesc('<?= $desc_id ?>')">See less</span></span>
+                <?php else: ?>
+                    <?= $desc ?>
+                <?php endif; ?>
+            </p>
+            <?php endif; ?>
 
             <?php if ($event_ended): ?>
                 <button class="btn-register-closed" disabled title="This event has already ended">
@@ -191,6 +254,16 @@ function applyFilters() {
 filterSelect.addEventListener('change', applyFilters);
 searchInput.addEventListener('input', applyFilters);
 applyFilters();
+
+// ── See more / See less ──
+function toggleDesc(id) {
+    const p       = document.getElementById(id);
+    const short   = p.querySelector('.event-desc-short');
+    const full    = p.querySelector('.event-desc-full');
+    const showing = full.style.display !== 'none';
+    short.style.display = showing ? '' : 'none';
+    full.style.display  = showing ? 'none' : '';
+}
 </script>
 </body>
 </html>
