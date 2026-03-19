@@ -314,7 +314,11 @@ $events_result = $conn->query($events_query);
                 $pct         = $capacity > 0 ? ($available / $capacity) * 100 : 100;
                 $isLow       = $pct < 30;
                 $isFree      = $event['price'] == 0;
-                $description = htmlspecialchars(mb_substr($event['description'], 0, 110)) . '…';
+                $desc_full  = htmlspecialchars($event['description'] ?? '');
+                $desc_limit = 100;
+                $desc_long  = mb_strlen($desc_full) > $desc_limit;
+                $desc_short = $desc_long ? mb_substr($desc_full, 0, $desc_limit) : $desc_full;
+                $desc_id    = 'ldesc-' . $event['event_id'];
             ?>
             <div class="event-card">
                 <div class="event-banner">
@@ -336,7 +340,15 @@ $events_result = $conn->query($events_query);
                         <?php endif; ?>
                     </div>
 
-                    <p class="event-description"><?= $description ?></p>
+                    <?php if ($desc_full): ?>
+                    <p class="event-description lp-desc" id="<?= $desc_id ?>">
+                        <?php if ($desc_long): ?>
+                            <span class="lp-desc-short"><?= $desc_short ?>... <span class="lp-see-more" onclick="toggleLpDesc('<?= $desc_id ?>')">See more</span></span><span class="lp-desc-full" style="display:none;"><?= $desc_full ?> <span class="lp-see-less" onclick="toggleLpDesc('<?= $desc_id ?>')">See less</span></span>
+                        <?php else: ?>
+                            <?= $desc_full ?>
+                        <?php endif; ?>
+                    </p>
+                    <?php endif; ?>
 
                     <div class="event-badges">
                         <span class="event-badge <?= $isLow ? 'event-badge-low' : '' ?>">
@@ -559,6 +571,15 @@ hlSection.addEventListener('mouseenter', () => clearInterval(autoplay));
 hlSection.addEventListener('mouseleave', () => {
     autoplay = setInterval(() => goToHighlight((currentIdx + 1) % highlightsData.length), 5000);
 });
+// ── Landing page description See more / See less ──
+function toggleLpDesc(id) {
+    const p     = document.getElementById(id);
+    const short = p.querySelector('.lp-desc-short');
+    const full  = p.querySelector('.lp-desc-full');
+    const showing = full.style.display !== 'none';
+    short.style.display = showing ? '' : 'none';
+    full.style.display  = showing ? 'none' : '';
+}
 </script>
 </body>
 </html>
