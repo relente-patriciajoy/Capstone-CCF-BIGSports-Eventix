@@ -32,6 +32,25 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
         <a href="../dashboard/my_events.php" class="<?= $current_page === 'my_events.php' ? 'active' : '' ?>">
             <i data-lucide="user-check"></i> My Events
         </a>
+        <?php
+        // Show Volunteer Events link only if user has volunteered
+        if (isset($conn) && isset($_SESSION['user_id'])) {
+            $vol_check = $conn->prepare("
+                SELECT COUNT(*) as c FROM volunteer_member vm
+                JOIN volunteer_role_type vrt ON vm.role_type_id = vrt.role_type_id
+                WHERE vm.user_id = ?
+            ");
+            $vol_check->bind_param("i", $_SESSION['user_id']);
+            $vol_check->execute();
+            $vol_count = $vol_check->get_result()->fetch_assoc()['c'];
+            $vol_check->close();
+            if ($vol_count > 0):
+        ?>
+        <a href="../dashboard/my_volunteer_events.php" class="<?= $current_page === 'my_volunteer_events.php' ? 'active' : '' ?>">
+            <i data-lucide="users"></i> My Volunteer Events
+            <span style="background:#8b5cf6;color:white;border-radius:20px;font-size:0.7rem;padding:2px 7px;margin-left:auto;"><?= $vol_count ?></span>
+        </a>
+        <?php endif; } ?>
         <a href="../dashboard/attendance.php" class="<?= $current_page === 'attendance.php' ? 'active' : '' ?>">
             <i data-lucide="clipboard-check"></i> Attendance
         </a>
@@ -46,6 +65,9 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
             'announcement.php'
         ]) ? 'active' : '' ?>">
             <i data-lucide="layout-dashboard"></i> Event Management
+        </a>
+        <a href="../event/table_management.php" class="<?= $current_page === 'table_management.php' ? 'active' : '' ?>">
+            <i data-lucide="layout-grid"></i> Table Management
         </a>
         <?php endif; ?>
 
