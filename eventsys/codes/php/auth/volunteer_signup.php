@@ -109,17 +109,19 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
     <link rel="icon" type="image/png" href="../../assets/eventix-logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../css/auth.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../../css/volunteer.css">
+    
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="auth-page" style="display:block;background:#f9fafb;min-height:100vh;padding:24px 16px;">
+<body class="auth-page volunteer-signup-page" style="background:#f9fafb;min-height:100vh;">
 
-<div style="max-width:520px;margin:0 auto;">
+<div class="volunteer-signup-wrap">
 
     <!-- Header -->
     <div style="text-align:center;margin-bottom:24px;">
-        <img src="../../assets/eventix-logo.png" alt="Eventix"
-             style="width:56px;height:56px;border-radius:50%;margin-bottom:12px;">
-        <h1 style="font-size:1.6rem;font-weight:900;color:#1a1a1a;margin:0 0 4px;">Volunteer Sign Up</h1>
+        <img src="../../assets/eventix-logo.png" alt="Eventix" class="volunteer-signup-logo"
+             style="border-radius:50%;margin-bottom:12px;">
+        <h1 class="volunteer-signup-title" style="font-weight:900;color:#1a1a1a;margin:0 0 4px;">Volunteer Sign Up</h1>
         <p style="color:#6b7280;font-size:0.9rem;margin:0;">Join the team for this event</p>
     </div>
 

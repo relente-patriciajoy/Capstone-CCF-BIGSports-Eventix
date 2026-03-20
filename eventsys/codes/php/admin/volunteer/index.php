@@ -38,16 +38,7 @@ $events = $conn->query("
     <link rel="stylesheet" href="../../../css/sidebar.css">
     <link rel="stylesheet" href="../../../css/management.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-.btn-primary:hover {
-    color: white !important;
-}
-.btn.btn-primary:hover,
-a.btn.btn-primary:hover {
-    color: white !important;
-    opacity: 0.9;
-}
-</style>
+    
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="dashboard-layout">

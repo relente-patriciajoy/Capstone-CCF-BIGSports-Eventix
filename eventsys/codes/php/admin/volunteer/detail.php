@@ -84,7 +84,8 @@ $role_colors = ['ushering'=>'#3b82f6','admin'=>'#f59e0b','technical'=>'#8b5cf6']
     <link rel="stylesheet" href="../../../css/sidebar.css">
     <link rel="stylesheet" href="../../../css/management.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="dashboard-layout">
 <?php include(__DIR__ . '/../admin_sidebar.php'); ?>
