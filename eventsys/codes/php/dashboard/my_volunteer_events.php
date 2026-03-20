@@ -8,6 +8,9 @@ include('../../includes/db.php');
 
 $user_id = $_SESSION['user_id'];
 
+// Mark volunteer events as seen — add 1 second buffer to ensure all current records are before this
+$_SESSION['volunteer_seen_at'] = time() + 1;
+
 // Fetch all volunteer events the user has joined
 $stmt = $conn->prepare("
     SELECT ve.volunteer_event_id, ve.title, ve.description, ve.event_date, ve.location,
@@ -54,7 +57,6 @@ $role_icons  = ['ushering' => 'door-open', 'admin' => 'clipboard-list', 'technic
             background: white;
             border-radius: 16px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            overflow: hidden;
             border: 1.5px solid #e5e7eb;
             display: flex;
             flex-direction: column;
@@ -187,7 +189,7 @@ $role_icons  = ['ushering' => 'door-open', 'admin' => 'clipboard-list', 'technic
         }
     </style>
 </head>
-<body class="dashboard-layout">
+<body class="dashboard-layout <?= isset($role) && $role === 'event_head' ? 'event-head-page' : '' ?>">
 <?php
 // Set role for sidebar
 $role_stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ?");
@@ -200,8 +202,14 @@ $role_stmt->close();
 <?php include('../components/sidebar.php'); ?>
 
 <main class="main-content">
-    <header class="banner">
+    <header class="banner <?= $role === 'event_head' ? 'event-head-banner' : '' ?>">
         <div>
+            <?php if ($role === 'event_head'): ?>
+            <div class="event-head-badge">
+                <i data-lucide="briefcase" style="width:14px;height:14px;"></i>
+                Event Organizer
+            </div>
+            <?php endif; ?>
             <h1>My Volunteer Events</h1>
             <p>Events you've signed up to volunteer for</p>
         </div>
