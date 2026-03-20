@@ -24,7 +24,9 @@ function autoAssignTable($conn, $event_id, $user_id, $registration_id) {
     $user = $ug->get_result()->fetch_assoc();
     $ug->close();
 
-    $gender = $user['gender'] ?? 'male';
+    $gender = $user['gender'] ?? null;
+    // If gender is unknown and event is gender-separated, assign to mixed or first available
+    if (!$gender) $gender = 'mixed';
 
     // Find the first table with available space that matches gender
     // Rule: fill table completely before moving to next (no empty seats)

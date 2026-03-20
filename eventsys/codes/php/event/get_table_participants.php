@@ -14,7 +14,12 @@ $table_number = (int)($_GET['table_number'] ?? 0);
 $user_id      = $_SESSION['user_id'];
 
 // Verify event ownership
-$chk = $conn->prepare("SELECT event_id FROM event WHERE event_id = ? AND organizer_id = ?");
+$chk = $conn->prepare("
+    SELECT e.event_id FROM event e
+    JOIN organizer o ON e.organizer_id = o.organizer_id
+    JOIN user u ON o.contact_email = u.email
+    WHERE e.event_id = ? AND u.user_id = ?
+");
 $chk->bind_param("ii", $event_id, $user_id);
 $chk->execute();
 if ($chk->get_result()->num_rows === 0) {

@@ -531,7 +531,65 @@ $role_stmt->close();
                     Click any table to view participants and reassign seats.
                 </p>
 
-                <div class="table-grid">
+                <?php
+            // Check for unassigned participants (table_number = 0)
+            $unassigned = $conn->prepare("
+                SELECT r.registration_id, CONCAT(u.first_name,' ',u.last_name) AS name,
+                       u.email, u.gender
+                FROM registration r
+                JOIN user u ON r.user_id = u.user_id
+                WHERE r.event_id = ? AND r.table_number = 0
+            ");
+            $unassigned->bind_param("i", $selected_event_id);
+            $unassigned->execute();
+            $unassigned_result = $unassigned->get_result();
+            $unassigned_count  = $unassigned_result->num_rows;
+            ?>
+
+            <?php if ($unassigned_count > 0): ?>
+            <div style="background:#fff3cd;border-radius:12px;padding:16px 20px;margin-bottom:20px;border-left:4px solid #f59e0b;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#f59e0b;"></i>
+                    <strong style="color:#92400e;"><?= $unassigned_count ?> participant(s) not assigned to a table yet</strong>
+                </div>
+                <?php while ($ua = $unassigned_result->fetch_assoc()): ?>
+                <form method="POST" action="" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+                    <input type="hidden" name="reassign" value="1">
+                    <input type="hidden" name="registration_id" value="<?= $ua['registration_id'] ?>">
+                    <input type="hidden" name="event_id" value="<?= $selected_event_id ?>">
+                    <span style="font-size:0.88rem;font-weight:600;flex:1;min-width:160px;">
+                        <?= htmlspecialchars($ua['name']) ?>
+                        <span style="background:<?= $ua['gender']==='male'?'#dbeafe':'#fce7f3' ?>;color:<?= $ua['gender']==='male'?'#1d4ed8':'#be185d' ?>;font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">
+                            <?= ucfirst($ua['gender'] ?? '—') ?>
+                        </span>
+                    </span>
+                    <select name="new_table_number" class="eh-select" style="width:auto;min-width:160px;" required>
+                        <option value="">-- Assign to table --</option>
+                        <?php foreach ($tables as $t):
+                            $gender_ok = $event_info['gender_separated']
+                                ? ($t['gender_assignment'] === $ua['gender'] || $t['gender_assignment'] === 'mixed')
+                                : true;
+                            $full = $t['occupants'] >= $t['capacity'];
+                        ?>
+                        <option value="<?= $t['table_number'] ?>"
+                            <?= (!$gender_ok || $full) ? 'disabled' : '' ?>>
+                            Table <?= $t['table_number'] ?>
+                            (<?= $t['occupants'] ?>/<?= $t['capacity'] ?>)
+                            <?= $t['gender_assignment'] !== 'mixed' ? '— '.ucfirst($t['gender_assignment']) : '' ?>
+                            <?= $full ? '[FULL]' : '' ?>
+                            <?= !$gender_ok ? '[WRONG GENDER]' : '' ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" class="eh-btn eh-btn-primary" style="white-space:nowrap;padding:8px 16px;font-size:0.85rem;">
+                        <i data-lucide="user-check" style="width:14px;height:14px;"></i> Assign
+                    </button>
+                </form>
+                <?php endwhile; ?>
+            </div>
+            <?php endif; ?>
+
+            <div class="table-grid">
                     <?php foreach ($tables as $t):
                         $pct   = $t['capacity'] > 0 ? ($t['occupants'] / $t['capacity']) * 100 : 0;
                         $state = $pct >= 100 ? 'full' : ($pct >= 70 ? 'almost' : 'available');
