@@ -1364,7 +1364,6 @@ a:hover {
 /* Inline SVG search icon */
 .events-search-icon {
   position: absolute;
-  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
