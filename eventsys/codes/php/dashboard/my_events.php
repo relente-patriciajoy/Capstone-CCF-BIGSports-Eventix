@@ -19,7 +19,8 @@ $stmt->close();
 
 $query = "
 SELECT r.registration_id, e.title, e.start_time, e.end_time,
-       v.name AS venue, r.registration_date, r.table_number, r.status
+       v.name AS venue, r.registration_date, r.table_number, r.status,
+       e.has_tables
 FROM registration r
 JOIN event e ON r.event_id = e.event_id
 JOIN venue v ON e.venue_id = v.venue_id
@@ -123,7 +124,9 @@ $result = $stmt->get_result();
                     : date('F j', $start) . ' – ' . date('F j, Y', $end);
                 ?>
                 <p><strong>Date:</strong> <?= $date_str ?></p>
+                <?php if ($row['has_tables'] && $row['table_number'] > 0): ?>
                 <p><strong>Table Number:</strong> <?= $row['table_number'] ?></p>
+                <?php endif; ?>
                 <p>
                     <strong>Status:</strong>
                     <span class="status-badge status-<?= $status ?>">

@@ -19,7 +19,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
         $title = $_POST['title']; $description = $_POST['description'];
         $start_time = $_POST['start_time']; $end_time = $_POST['end_time'];
         $venue_name = $_POST['venue_name']; $venue_address = $_POST['venue_address']; $venue_city = $_POST['venue_city'];
-        $capacity = $_POST['capacity']; $price = $_POST['price']; $category_id = $_POST['category_id'];
+        $capacity = $_POST['capacity']; $category_id = $_POST['category_id'];
+        $has_tables = isset($_POST['has_tables']) ? 1 : 0;
+        $gender_separated = isset($_POST['gender_separated']) ? 1 : 0;
 
         $venue_stmt = $conn->prepare("INSERT INTO venue (name, address, city) VALUES (?, ?, ?)");
         $venue_stmt->bind_param("sss", $venue_name, $venue_address, $venue_city); $venue_stmt->execute();
@@ -40,8 +42,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
             $organizer_id = $insert_org->insert_id; $insert_org->close();
         }
 
-        $stmt = $conn->prepare("INSERT INTO event (title, description, start_time, end_time, venue_id, organizer_id, capacity, price, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssiiidi", $title, $description, $start_time, $end_time, $venue_id, $organizer_id, $capacity, $price, $category_id);
+        $stmt = $conn->prepare("INSERT INTO event (title, description, start_time, end_time, venue_id, organizer_id, capacity, category_id, has_tables, gender_separated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssiiiiii", $title, $description, $start_time, $end_time, $venue_id, $organizer_id, $capacity, $category_id, $has_tables, $gender_separated);
         $message = $stmt->execute() ? "Event created successfully!" : "Failed to create event.";
         if (!$stmt->execute()) $error = "Failed to create event.";
         $stmt->close();
@@ -54,9 +56,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
     else {
         $title = $_POST['title']; $description = $_POST['description'];
         $start_time = $_POST['start_time']; $end_time = $_POST['end_time'];
-        $capacity = $_POST['capacity']; $price = $_POST['price']; $category_id = $_POST['category_id'];
-        $stmt = $conn->prepare("UPDATE event SET title=?, description=?, start_time=?, end_time=?, capacity=?, price=?, category_id=? WHERE event_id=?");
-        $stmt->bind_param("ssssiddi", $title, $description, $start_time, $end_time, $capacity, $price, $category_id, $event_id);
+        $capacity = $_POST['capacity']; $category_id = $_POST['category_id'];
+        $has_tables = isset($_POST['has_tables']) ? 1 : 0;
+        $gender_separated = isset($_POST['gender_separated']) ? 1 : 0;
+        $stmt = $conn->prepare("UPDATE event SET title=?, description=?, start_time=?, end_time=?, capacity=?, category_id=?, has_tables=?, gender_separated=? WHERE event_id=?");
+        $stmt->bind_param("ssssiiiii", $title, $description, $start_time, $end_time, $capacity, $category_id, $has_tables, $gender_separated, $event_id);
         $message = $stmt->execute() ? "Event updated successfully!" : "Failed to update event.";
         if (!$stmt->execute()) $error = "Failed to update event.";
         $stmt->close();
@@ -254,13 +258,9 @@ $events = $stmt->get_result();
                     </div>
                     <?php endif; ?>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <input type="number" name="capacity" placeholder="Capacity" value="<?= htmlspecialchars($edit_event['capacity'] ?? '') ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" step="0.01" name="price" placeholder="Price" value="<?= htmlspecialchars($edit_event['price'] ?? '') ?>" required>
-                        </div>
+                    <div class="form-group">
+                        <label>Available Seats</label>
+                        <input type="number" name="capacity" placeholder="e.g. 100" value="<?= htmlspecialchars($edit_event['capacity'] ?? '') ?>" required>
                     </div>
                     <div class="form-group">
                         <select name="category_id" required>
@@ -272,6 +272,33 @@ $events = $stmt->get_result();
                             <?php endwhile; ?>
                         </select>
                     </div>
+
+                    <!-- Table Management Options -->
+                    <div class="form-group table-mgmt-box">
+                        <div class="table-mgmt-header">
+                            <i data-lucide="layout-grid" style="width:15px;height:15px;"></i>
+                            Table Management
+                        </div>
+                        <label class="table-mgmt-option">
+                            <input type="checkbox" name="has_tables" value="1"
+                                   <?= ($edit_event && $edit_event['has_tables']) ? 'checked' : '' ?>
+                                   onchange="document.getElementById('gender-sep-row').style.display = this.checked ? 'flex' : 'none'">
+                            <div class="table-mgmt-option-text">
+                                <span class="table-mgmt-option-label">Enable table assignment</span>
+                                <span class="table-mgmt-option-desc">Participants will be auto-assigned to tables when they register</span>
+                            </div>
+                        </label>
+                        <label class="table-mgmt-option table-mgmt-sub" id="gender-sep-row"
+                               style="display:<?= ($edit_event && $edit_event['has_tables']) ? 'flex' : 'none' ?>">
+                            <input type="checkbox" name="gender_separated" value="1"
+                                   <?= ($edit_event && $edit_event['gender_separated']) ? 'checked' : '' ?>>
+                            <div class="table-mgmt-option-text">
+                                <span class="table-mgmt-option-label">Separate by gender</span>
+                                <span class="table-mgmt-option-desc">Males and females assigned to separate tables</span>
+                            </div>
+                        </label>
+                    </div>
+
                     <div class="form-actions">
                         <?php if ($edit_event): ?>
                             <button type="submit" name="update_event" class="btn-primary"><i data-lucide="save"></i> Update Event</button>

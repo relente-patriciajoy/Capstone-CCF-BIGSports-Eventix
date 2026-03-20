@@ -25,7 +25,6 @@ $query = "SELECT
             e.start_time,
             e.end_time,
             e.capacity,
-            e.price,
             v.name AS venue,
             (e.capacity - COUNT(r.registration_id)) AS available_seats
         FROM event e
@@ -255,7 +254,7 @@ filterSelect.addEventListener('change', applyFilters);
 searchInput.addEventListener('input', applyFilters);
 applyFilters();
 
-// ── See more / See less ──
+// ── Facebook-style inline See more / See less ──
 function toggleDesc(id) {
     const p       = document.getElementById(id);
     const short   = p.querySelector('.event-desc-short');

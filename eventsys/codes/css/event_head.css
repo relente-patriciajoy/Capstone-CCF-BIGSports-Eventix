@@ -1531,3 +1531,182 @@
     .table-mgmt-option-desc { font-size: 0.75rem; }
     .table-mgmt-sub { margin-left: 10px; }
 }
+
+/* ============================================
+   TABLE MANAGEMENT — SETUP FORM
+   ============================================ */
+
+.table-setup-form {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.table-setup-form .eh-form-group {
+    flex: 1;
+    min-width: 140px;
+}
+
+.table-gender-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px; /* Match input height exactly */
+    padding: 0 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+
+.table-gender-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--maroon, #800020);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.table-gender-check label {
+    font-size: 0.88rem;
+    color: #1a1a1a;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.table-setup-btn {
+    height: 42px; /* Match input height */
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-setup-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .table-setup-form .eh-form-group { min-width: 100%; }
+    .table-setup-btn { width: 100%; justify-content: center; }
+    .table-gender-check { height: auto; padding: 10px 14px; }
+}
+
+@media (max-width: 480px) {
+    .table-gender-check label { font-size: 0.82rem; white-space: normal; }
+}
+
+/* ============================================
+   TABLE SETUP FORM — table_management.php
+   ============================================ */
+
+.table-setup-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.table-setup-form .eh-form-group {
+    flex: 1;
+    min-width: 140px;
+    margin: 0;
+}
+
+.table-gender-group {
+    flex: 1.5;
+    min-width: 200px;
+}
+
+.table-gender-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    height: 42px;
+    box-sizing: border-box;
+}
+
+.table-gender-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--maroon, #800020);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.table-gender-check label {
+    font-size: 0.88rem;
+    color: #374151;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+.table-setup-action {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+}
+
+.table-setup-action .eh-btn {
+    white-space: nowrap;
+    height: 42px;
+}
+
+@media (max-width: 768px) {
+    .table-setup-form {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .table-setup-form .eh-form-group,
+    .table-gender-group { min-width: 100%; flex: unset; }
+    .table-setup-action { width: 100%; }
+    .table-setup-action .eh-btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .table-gender-check { padding: 9px 12px; }
+    .table-gender-check label { font-size: 0.82rem; }
+}
+
+/* ── Table capacity hint box ── */
+.table-capacity-hint {
+    margin-top: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1.5px solid #e5e7eb;
+    font-size: 0.88rem;
+}
+
+.table-capacity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 12px;
+}
+
+.table-capacity-row:last-of-type { border-bottom: none; }
+
+.table-capacity-tip {
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+    .table-capacity-hint { padding: 12px; }
+    .table-capacity-row  { font-size: 0.82rem; }
+    .table-capacity-tip  { font-size: 0.75rem; }
+}
