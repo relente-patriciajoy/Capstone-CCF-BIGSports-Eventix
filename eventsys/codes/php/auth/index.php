@@ -75,7 +75,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $_SESSION['login_time'] = time();
                         if ($remember) trustDevice($conn, $user_id, 30);
                         logLoginAttempt($conn, $user_id, $email, 1);
-                        header($role === 'admin' ? "Location: ../admin/admin_dashboard.php" : "Location: ../dashboard/home.php");
+
+                        // Volunteer redirect after login
+                        if (!empty($_SESSION['volunteer_redirect'])) {
+                            $redirect = $_SESSION['volunteer_redirect'];
+                            unset($_SESSION['volunteer_redirect']);
+                            header("Location: " . $redirect);
+                        } else {
+                            header($role === 'admin' ? "Location: ../admin/admin_dashboard.php" : "Location: ../dashboard/home.php");
+                        }
                         exit();
                     }
                 } else {
