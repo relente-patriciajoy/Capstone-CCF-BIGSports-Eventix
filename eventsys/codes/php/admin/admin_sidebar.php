@@ -34,20 +34,20 @@
                 <span>▾</span>
             </div>
             <div class="dropdown-menu">
-                <a href="/Registration-System/eventsys/codes/php/admin/manage_user.php"       class="<?= basename($_SERVER['PHP_SELF']) === 'manage_user.php'       ? 'active' : '' ?>">Users</a>
-                <a href="/Registration-System/eventsys/codes/php/admin/manage_venue.php"      class="<?= basename($_SERVER['PHP_SELF']) === 'manage_venue.php'      ? 'active' : '' ?>">Venues</a>
-                <a href="/Registration-System/eventsys/codes/php/admin/manage_organizer.php"  class="<?= basename($_SERVER['PHP_SELF']) === 'manage_organizer.php'  ? 'active' : '' ?>">Organizers</a>
+                <a href="/Registration-System/eventsys/codes/php/admin/manage_user.php" class="<?= basename($_SERVER['PHP_SELF']) === 'manage_user.php'       ? 'active' : '' ?>">Users</a>
+                <a href="/Registration-System/eventsys/codes/php/admin/manage_venue.php" class="<?= basename($_SERVER['PHP_SELF']) === 'manage_venue.php'      ? 'active' : '' ?>">Venues</a>
+                <a href="/Registration-System/eventsys/codes/php/admin/manage_organizer.php" class="<?= basename($_SERVER['PHP_SELF']) === 'manage_organizer.php'  ? 'active' : '' ?>">Organizers</a>
                 <a href="/Registration-System/eventsys/codes/php/admin/manage_categories.php" class="<?= basename($_SERVER['PHP_SELF']) === 'manage_categories.php' ? 'active' : '' ?>">Categories</a>
             </div>
         </div>
 
-        <a href="/Registration-System/eventsys/codes/php/admin/admin_all_events.php"     class="<?= basename($_SERVER['PHP_SELF']) === 'admin_all_events.php'     ? 'active' : '' ?>">
+        <a href="/Registration-System/eventsys/codes/php/admin/admin_all_events.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_all_events.php'     ? 'active' : '' ?>">
             <i data-lucide="calendar"></i> All Events
         </a>
         <a href="/Registration-System/eventsys/codes/php/admin/admin_view_attendance.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_view_attendance.php' ? 'active' : '' ?>">
             <i data-lucide="users"></i> Attendance
         </a>
-        <a href="/Registration-System/eventsys/codes/php/admin/user_promotions.php"       class="<?= basename($_SERVER['PHP_SELF']) === 'user_promotions.php'       ? 'active' : '' ?>">
+        <a href="/Registration-System/eventsys/codes/php/admin/user_promotions.php" class="<?= basename($_SERVER['PHP_SELF']) === 'user_promotions.php'       ? 'active' : '' ?>">
             <i data-lucide="user-plus"></i> Promote Users
         </a>
         <a href="/Registration-System/eventsys/codes/php/admin/admin_recovery_requests.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_recovery_requests.php' ? 'active' : '' ?>">
@@ -55,13 +55,6 @@
         </a>
         <a href="/Registration-System/eventsys/codes/php/admin/volunteer/index.php" class="<?= strpos($_SERVER['REQUEST_URI'], '/volunteer/') !== false ? 'active' : '' ?>">
             <i data-lucide="users"></i> Volunteer Management
-            <?php
-            // Show pending badge if $conn is available
-            if (isset($conn)) {
-                $rq = $conn->query("SELECT COUNT(*) as c FROM account_recovery_request WHERE status='pending'");
-                if ($rq) { $rc = $rq->fetch_assoc()['c']; if ($rc > 0) echo "<span style='background:#e63946;color:white;border-radius:20px;font-size:0.7rem;padding:2px 7px;margin-left:auto;'>$rc</span>"; }
-            }
-            ?>
         </a>
         <a href="/Registration-System/eventsys/codes/php/admin/backup_restore.php">
             <i data-lucide="database"></i> Backup &amp; Restore

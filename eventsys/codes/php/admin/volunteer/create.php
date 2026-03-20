@@ -219,6 +219,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .role-row { grid-template-columns: 1fr; }
     .role-row button { width: 100%; }
 }
+<style>
+/* Fix role row layout */
+.role-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+}
+
+/* Fix select dropdown alignment */
+.role-row select,
+.form-group select,
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    color: #1a1a1a;
+    background: white;
+    appearance: auto;
+    box-sizing: border-box;
+}
+
+/* Fix Add Role button hover */
+.btn-secondary:hover {
+    background: var(--maroon, #800020) !important;
+    color: white !important;
+    border-color: var(--maroon, #800020) !important;
+}
+
+/* Fix form actions — proper width buttons */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+    padding: 11px 28px;
+    font-size: 0.9rem;
+    width: auto;
+    min-width: 160px;
+}
+
+@media (max-width: 600px) {
+    .role-row { grid-template-columns: 1fr; }
+    .form-actions { flex-direction: column; }
+    .form-actions .btn-primary,
+    .form-actions .btn-secondary { width: 100%; }
+}
 </style>
 
 <script>
