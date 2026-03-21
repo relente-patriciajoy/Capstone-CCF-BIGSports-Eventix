@@ -62,18 +62,15 @@ if ($selected_event) {
         <!-- Event Selection -->
         <div class="management-card">
             <h2>Select Event</h2>
-            <form method="GET" class="admin-form-col">
-                <div class="form-group">
-                    <label for="event_id"><strong>Choose Event:</strong></label>
-                    <select name="event_id" id="event_id" required>
-                        <option value="">-- Select an Event --</option>
-                        <?php while ($event = $events_query->fetch_assoc()): ?>
-                            <option value="<?= $event['event_id'] ?>" <?= $selected_event == $event['event_id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($event['title']) ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
+            <form method="GET" class="management-search">
+                <select name="event_id" id="event_id" required>
+                    <option value="">-- Select an Event --</option>
+                    <?php while ($event = $events_query->fetch_assoc()): ?>
+                        <option value="<?= $event['event_id'] ?>" <?= $selected_event == $event['event_id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($event['title']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
                 <button type="submit" class="btn btn-primary">
                     <i data-lucide="eye"></i>
                     View Attendance
