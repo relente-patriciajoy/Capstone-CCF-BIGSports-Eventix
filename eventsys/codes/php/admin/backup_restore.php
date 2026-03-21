@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_backup'])) {
         $backup_file = $backup_dir . $filename;
         
         // Execute mysqldump - Windows XAMPP
-        $command = "\"C:\\xampp\\mysql\\bin\\mysqldump\" --user=root --host=localhost event_registration > \"{$backup_file}\"";
+        $command = '"C:\xampp\mysql\bin\mysqldump" --user=root --host=localhost event_registration > "' . $backup_file . '"';
         
         exec($command, $output, $result);
         
@@ -87,11 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['restore_backup'])) {
     if (!file_exists($backup_path)) {
         $error = "Backup file not found.";
     } else {
-        // Execute mysql restore
-        // Windows XAMPP
-        $command = "\"C:\\xampp\\mysql\\bin\\mysql\" --user=root --host=localhost event_registration < \"{$backup_path}\"";
-        // For Windows XAMPP
-        // $command = "\"C:\\xampp\\mysql\\bin\\mysql\" --user={$db_user} --password={$db_pass} --host={$db_host} {$db_name} < {$backup_path}";
+        $command = '"C:\xampp\mysql\bin\mysql" --user=root --host=localhost event_registration < "' . $backup_path . '"';
         
         exec($command, $output, $result);
         
@@ -155,7 +151,6 @@ if (is_dir($backup_dir)) {
             ];
         }
     }
-    // Sort by date (newest first)
     usort($backups, function($a, $b) {
         return $b['date'] - $a['date'];
     });
@@ -181,126 +176,20 @@ $logs_query = $conn->query("
     <link rel="stylesheet" href="../../css/management.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        .backup-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-        
-        .backup-card {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border-left: 4px solid #e63946;
-        }
-        
-        .backup-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 16px;
-            color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin: 16px 0;
-        }
-        
-        .radio-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .radio-option:hover {
-            border-color: #e63946;
-            background: #fff5f5;
-        }
-        
-        .radio-option input[type="radio"]:checked + label {
-            color: #e63946;
-            font-weight: 600;
-        }
-        
-        .backup-file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            border: 2px solid #f0f0f0;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-        
-        .backup-file-item:hover {
-            border-color: #e63946;
-            background: #fff5f5;
-        }
-        
-        .file-info {
-            flex: 1;
-        }
-        
-        .file-name {
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-        
-        .file-meta {
-            font-size: 0.85rem;
-            color: #6b6b6b;
-        }
-        
-        .file-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .warning-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: start;
-            gap: 12px;
-        }
-        
-        .warning-box strong {
-            color: #856404;
-        }
-    </style>
 </head>
 <body class="dashboard-layout">
     <?php include('admin_sidebar.php'); ?>
 
     <main class="management-content">
-        <!-- Page Header -->
         <div class="admin-header">
             <div class="admin-badge">
-                <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
+                <i data-lucide="shield" style="width:14px;height:14px;"></i>
                 Administrator
             </div>
             <h1>Backup & Restore</h1>
             <p>Create backups and restore database</p>
         </div>
 
-        <!-- Alert Messages -->
         <?php if (!empty($message)): ?>
             <div class="management-alert success">
                 <i data-lucide="check-circle"></i>
@@ -325,45 +214,35 @@ $logs_query = $conn->query("
             </div>
         <?php endif; ?>
 
-        <!-- Backup & Restore Grid -->
         <div class="backup-grid">
             <!-- Create Backup -->
             <div class="backup-card">
                 <h3>
-                    <i data-lucide="database" style="width: 24px; height: 24px;"></i>
+                    <i data-lucide="database" style="width:24px;height:24px;"></i>
                     Create Backup
                 </h3>
-                
                 <form method="POST" id="backupForm">
                     <div class="radio-group">
                         <label class="radio-option">
                             <input type="radio" name="filename_option" value="date" checked onchange="toggleCustomFilename()">
                             <span>Use current date & time</span>
                         </label>
-                        
                         <label class="radio-option">
                             <input type="radio" name="filename_option" value="custom" onchange="toggleCustomFilename()">
                             <span>Custom filename</span>
                         </label>
                     </div>
-
-                    <div class="form-group" id="customFilenameGroup" style="display: none; margin-top: 12px;">
+                    <div class="form-group" id="customFilenameGroup" style="display:none;margin-top:12px;">
                         <label for="custom_filename">Custom Filename</label>
-                        <input
-                            type="text"
-                            id="custom_filename"
-                            name="custom_filename"
-                            placeholder="e.g., before_update, weekly_backup"
-                            pattern="[a-zA-Z0-9_-]+"
-                        >
-                        <small style="color: #6b6b6b; font-size: 0.85rem; margin-top: 4px; display: block;">
+                        <input type="text" id="custom_filename" name="custom_filename"
+                               placeholder="e.g., before_update, weekly_backup"
+                               pattern="[a-zA-Z0-9_-]+">
+                        <small style="color:#6b6b6b;font-size:0.85rem;margin-top:4px;display:block;">
                             Only letters, numbers, hyphens, and underscores allowed
                         </small>
                     </div>
-
-                    <button type="submit" name="create_backup" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
-                        <i data-lucide="download"></i>
-                        Create Backup
+                    <button type="submit" name="create_backup" class="btn btn-primary" style="width:100%;margin-top:16px;">
+                        <i data-lucide="download"></i> Create Backup
                     </button>
                 </form>
             </div>
@@ -371,18 +250,16 @@ $logs_query = $conn->query("
             <!-- Restore from Backup -->
             <div class="backup-card">
                 <h3>
-                    <i data-lucide="upload" style="width: 24px; height: 24px;"></i>
+                    <i data-lucide="upload" style="width:24px;height:24px;"></i>
                     Restore Database
                 </h3>
-
                 <div class="warning-box">
-                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #ffc107; flex-shrink: 0;"></i>
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;color:#ffc107;flex-shrink:0;"></i>
                     <div>
                         <strong>Warning!</strong><br>
                         Restoring will replace all current data. Create a backup first!
                     </div>
                 </div>
-
                 <form method="POST" id="restoreForm" onsubmit="return confirmRestore()">
                     <div class="form-group">
                         <label for="restore_file">Select Backup File</label>
@@ -390,16 +267,14 @@ $logs_query = $conn->query("
                             <option value="">-- Choose a backup --</option>
                             <?php foreach ($backups as $backup): ?>
                                 <option value="<?= htmlspecialchars($backup['filename']) ?>">
-                                    <?= htmlspecialchars($backup['filename']) ?> 
+                                    <?= htmlspecialchars($backup['filename']) ?>
                                     (<?= date('M j, Y g:i A', $backup['date']) ?>)
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
-                    <button type="submit" name="restore_backup" class="btn btn-primary" style="width: 100%; margin-top: 16px; background: #f59e0b;">
-                        <i data-lucide="rotate-ccw"></i>
-                        Restore Database
+                    <button type="submit" name="restore_backup" class="btn btn-primary" style="width:100%;margin-top:16px;background:#f59e0b;">
+                        <i data-lucide="rotate-ccw"></i> Restore Database
                     </button>
                 </form>
             </div>
@@ -410,38 +285,30 @@ $logs_query = $conn->query("
             <div class="stat-card">
                 <div class="stat-card-header">
                     <h3>Total Backups</h3>
-                    <div class="stat-card-icon">
-                        <i data-lucide="archive" size="24"></i>
-                    </div>
+                    <div class="stat-card-icon"><i data-lucide="archive" size="24"></i></div>
                 </div>
                 <div class="stat-card-value"><?= count($backups) ?></div>
                 <div class="stat-card-change">Backup files available</div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-card-header">
                     <h3>Total Size</h3>
-                    <div class="stat-card-icon">
-                        <i data-lucide="hard-drive" size="24"></i>
-                    </div>
+                    <div class="stat-card-icon"><i data-lucide="hard-drive" size="24"></i></div>
                 </div>
                 <div class="stat-card-value">
                     <?php
                         $total_size = array_sum(array_column($backups, 'size'));
-                        echo $total_size > 1048576 ? round($total_size / 1048576, 2) . ' MB' : round($total_size / 1024, 2) . ' KB';
+                        echo $total_size > 1048576 ? round($total_size/1048576,2).' MB' : round($total_size/1024,2).' KB';
                     ?>
                 </div>
                 <div class="stat-card-change">Disk space used</div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-card-header">
                     <h3>Latest Backup</h3>
-                    <div class="stat-card-icon">
-                        <i data-lucide="clock" size="24"></i>
-                    </div>
+                    <div class="stat-card-icon"><i data-lucide="clock" size="24"></i></div>
                 </div>
-                <div class="stat-card-value" style="font-size: 1.2rem;">
+                <div class="stat-card-value" style="font-size:1.2rem;">
                     <?= !empty($backups) ? date('M j', $backups[0]['date']) : 'None' ?>
                 </div>
                 <div class="stat-card-change">
@@ -450,40 +317,35 @@ $logs_query = $conn->query("
             </div>
         </div>
 
-        <!-- Existing Backups -->
+        <!-- Available Backups -->
         <div class="management-card">
             <h2>Available Backups (<?= count($backups) ?>)</h2>
-            
             <?php if (!empty($backups)): ?>
-                <div style="margin-top: 20px;">
+                <div style="margin-top:20px;">
                     <?php foreach ($backups as $backup): ?>
                         <div class="backup-file-item">
                             <div class="file-info">
                                 <div class="file-name">
-                                    <i data-lucide="file-text" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                                    <i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i>
                                     <?= htmlspecialchars($backup['filename']) ?>
                                 </div>
                                 <div class="file-meta">
-                                    <?= date('F j, Y - g:i A', $backup['date']) ?> • 
-                                    <?= $backup['size'] > 1048576 ? round($backup['size'] / 1048576, 2) . ' MB' : round($backup['size'] / 1024, 2) . ' KB' ?>
+                                    <?= date('F j, Y - g:i A', $backup['date']) ?> •
+                                    <?= $backup['size'] > 1048576 ? round($backup['size']/1048576,2).' MB' : round($backup['size']/1024,2).' KB' ?>
                                 </div>
                             </div>
-                            
                             <div class="file-actions">
-                                <a 
-                                    href="?download=<?= urlencode($backup['filename']) ?>" 
-                                    class="btn btn-primary btn-sm"
-                                    title="Download"
-                                >
+                                <a href="?download=<?= urlencode($backup['filename']) ?>"
+                                   class="btn btn-primary btn-sm" title="Download">
                                     <i data-lucide="download"></i>
+                                    <span class="btn-label">Download</span>
                                 </a>
-                                <a 
-                                    href="?delete=<?= urlencode($backup['filename']) ?>" 
-                                    class="btn btn-delete btn-sm"
-                                    onclick="return confirm('Are you sure you want to delete this backup file?')"
-                                    title="Delete"
-                                >
+                                <a href="?delete=<?= urlencode($backup['filename']) ?>"
+                                   class="btn btn-delete btn-sm"
+                                   onclick="return confirm('Are you sure you want to delete this backup file?')"
+                                   title="Delete">
                                     <i data-lucide="trash-2"></i>
+                                    <span class="btn-label">Delete</span>
                                 </a>
                             </div>
                         </div>
@@ -498,34 +360,36 @@ $logs_query = $conn->query("
             <?php endif; ?>
         </div>
 
-        <!-- Recent Activity Logs -->
+        <!-- Recent Activity -->
         <?php if ($logs_query && $logs_query->num_rows > 0): ?>
             <div class="management-card">
                 <h2>Recent Activity</h2>
-                <table class="management-table">
-                    <thead>
-                        <tr>
-                            <th>Action</th>
-                            <th>Filename</th>
-                            <th>Admin</th>
-                            <th>Date & Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($log = $logs_query->fetch_assoc()): ?>
+                <div class="table-wrapper">
+                    <table class="management-table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <span class="badge badge-<?= $log['action'] === 'backup' ? 'success' : ($log['action'] === 'restore' ? 'warning' : 'danger') ?>">
-                                        <?= ucfirst($log['action']) ?>
-                                    </span>
-                                </td>
-                                <td><?= htmlspecialchars($log['filename']) ?></td>
-                                <td><?= htmlspecialchars($log['admin_name'] ?? 'Unknown') ?></td>
-                                <td><?= date('M j, Y g:i A', strtotime($log['created_at'])) ?></td>
+                                <th>Action</th>
+                                <th>Filename</th>
+                                <th>Admin</th>
+                                <th>Date & Time</th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php while ($log = $logs_query->fetch_assoc()): ?>
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-<?= $log['action']==='backup'?'success':($log['action']==='restore'?'warning':'danger') ?>">
+                                            <?= ucfirst($log['action']) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= htmlspecialchars($log['filename']) ?></td>
+                                    <td><?= htmlspecialchars($log['admin_name'] ?? 'Unknown') ?></td>
+                                    <td><?= date('M j, Y g:i A', strtotime($log['created_at'])) ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         <?php endif; ?>
     </main>
@@ -533,33 +397,23 @@ $logs_query = $conn->query("
     <script>
         lucide.createIcons();
 
-        // Toggle custom filename input
         function toggleCustomFilename() {
             const customOption = document.querySelector('input[name="filename_option"][value="custom"]');
-            const customGroup = document.getElementById('customFilenameGroup');
-            const customInput = document.getElementById('custom_filename');
-            
-            // Toggle custom filename input visibility
-            if (customOption.checked) {
-                customGroup.style.display = 'block';
-                customInput.required = true;
-            } else {
-                customGroup.style.display = 'none';
-                customInput.required = false;
-            }
+            const customGroup  = document.getElementById('customFilenameGroup');
+            const customInput  = document.getElementById('custom_filename');
+            if (customOption.checked) { customGroup.style.display = 'block'; customInput.required = true; }
+            else { customGroup.style.display = 'none'; customInput.required = false; }
         }
 
         function confirmRestore() {
             return confirm('⚠️ WARNING!\n\nThis will replace ALL current data with the backup.\n\nAre you absolutely sure you want to continue?');
         }
 
-        // Auto-dismiss alerts
         setTimeout(() => {
-            const alerts = document.querySelectorAll('.management-alert');
-            alerts.forEach(alert => {
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-10px)';
-                setTimeout(() => alert.remove(), 300);
+            document.querySelectorAll('.management-alert').forEach(a => {
+                a.style.opacity = '0';
+                a.style.transform = 'translateY(-10px)';
+                setTimeout(() => a.remove(), 300);
             });
         }, 5000);
     </script>
