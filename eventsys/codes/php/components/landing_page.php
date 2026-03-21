@@ -6,7 +6,7 @@ $events_query = "
     SELECT e.event_id, e.title, e.description, e.start_time, e.end_time,
            v.name AS venue_name, v.city,
            (e.capacity - COUNT(r.registration_id)) AS available_seats,
-           e.capacity, e.price
+           e.capacity
     FROM event e
     LEFT JOIN venue v ON e.venue_id = v.venue_id
     LEFT JOIN registration r ON e.event_id = r.event_id
@@ -313,7 +313,6 @@ $events_result = $conn->query($events_query);
                 $capacity    = (int)$event['capacity'];
                 $pct         = $capacity > 0 ? ($available / $capacity) * 100 : 100;
                 $isLow       = $pct < 30;
-                $isFree      = $event['price'] == 0;
                 $desc_full  = htmlspecialchars($event['description'] ?? '');
                 $desc_limit = 100;
                 $desc_long  = mb_strlen($desc_full) > $desc_limit;
@@ -355,10 +354,7 @@ $events_result = $conn->query($events_query);
                             <i data-lucide="users" class="icon-sm"></i>
                             <?= $available ?> / <?= $capacity ?> slots
                         </span>
-                        <span class="event-badge <?= $isFree ? 'event-badge-free' : '' ?>">
-                            <i data-lucide="tag" class="icon-sm"></i>
-                            <?= $isFree ? 'FREE' : '₱' . number_format($event['price'], 2) ?>
-                        </span>
+
                     </div>
 
                     <a href="../auth/index.php" class="event-register-btn">

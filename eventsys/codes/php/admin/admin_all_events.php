@@ -3,12 +3,6 @@ require_once('../../includes/session.php');
 require_once('../../includes/role_protection.php');
 requireRole('admin');
 
-/**
- * ADMIN - Manage All Events
- * Admins can view and manage ALL events in the system
- */
-
-// Admin access control
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../admin/admin-login.php");
     exit();
@@ -16,11 +10,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 include('../../includes/db.php');
 
-$user_id = $_SESSION['user_id'];
+$user_id   = $_SESSION['user_id'];
 $full_name = $_SESSION['full_name'];
-$role = $_SESSION['role'];
+$role      = $_SESSION['role'];
 
-// Handle delete
 if (isset($_GET['delete'])) {
     $delete_id = $_GET['delete'];
     $stmt = $conn->prepare("DELETE FROM event WHERE event_id = ?");
@@ -31,13 +24,12 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// Search functionality
-$search = $_GET['search'] ?? '';
+$search       = $_GET['search'] ?? '';
 $search_param = "%$search%";
 
 if (!empty($search)) {
     $stmt = $conn->prepare("
-        SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity, e.price,
+        SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity,
                v.name AS venue, o.name AS organizer,
                COUNT(r.registration_id) AS registrations
         FROM event e
@@ -51,7 +43,7 @@ if (!empty($search)) {
     $stmt->bind_param("sss", $search_param, $search_param, $search_param);
 } else {
     $stmt = $conn->prepare("
-        SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity, e.price,
+        SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity,
                v.name AS venue, o.name AS organizer,
                COUNT(r.registration_id) AS registrations
         FROM event e
@@ -82,42 +74,33 @@ $events = $stmt->get_result();
     <?php include('admin_sidebar.php'); ?>
 
     <main class="management-content">
-        <!-- Page Header -->
         <div class="admin-header">
-          <div class="admin-badge">
-              <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
-              Administrator
-          </div>
-          <h1>All Events</h1>
-          <p>View and manage all events in the system</p>
+            <div class="admin-badge">
+                <i data-lucide="shield" style="width:14px;height:14px;"></i>
+                Administrator
+            </div>
+            <h1>All Events</h1>
+            <p>View and manage all events in the system</p>
         </div>
 
-        <!-- Alert Messages -->
         <?php if (isset($_GET['status'])): ?>
             <div class="management-alert success">
-                                    if ($_GET['status'] === 'deleted') echo "🗑️ Event deleted successfully.";
-                ?>
+                <?php if ($_GET['status'] === 'deleted') echo "Event deleted successfully."; ?>
                 <span class="close-btn" onclick="this.parentElement.style.display='none';">×</span>
             </div>
         <?php endif; ?>
 
-        <!-- Search Card -->
         <div class="management-card">
             <form method="GET" class="management-search">
-                <input
-                    type="text"
-                    name="search"
-                    placeholder="Search by event name, venue, or organizer..."
-                    value="<?= htmlspecialchars($search) ?>"
-                >
+                <input type="text" name="search"
+                       placeholder="Search by event name, venue, or organizer..."
+                       value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="btn btn-primary">
-                    <i data-lucide="search"></i>
-                    Search
+                    <i data-lucide="search"></i> Search
                 </button>
             </form>
         </div>
 
-        <!-- Events Table -->
         <div class="management-card">
             <h2>All Events (<?= $events->num_rows ?>)</h2>
             <?php if ($events->num_rows > 0): ?>
@@ -129,7 +112,6 @@ $events = $stmt->get_result();
                             <th>Organizer</th>
                             <th>Date</th>
                             <th>Registrations</th>
-                            <th>Price</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -145,21 +127,15 @@ $events = $stmt->get_result();
                                         <?= $event['registrations'] ?> / <?= $event['capacity'] ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <?= $event['price'] > 0 ? '$' . number_format($event['price'], 2) : 'FREE' ?>
-                                </td>
                                 <td class="actions">
-                                    <a href="admin_view_event.php?id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
-                                        <i data-lucide="eye"></i>
-                                        View
+                                    <a href="admin_view_event.php?id=<?= $event['event_id'] ?>"
+                                       class="btn btn-primary btn-sm">
+                                        <i data-lucide="eye"></i> View
                                     </a>
-                                    <a
-                                        href="admin_all_events.php?delete=<?= $event['event_id'] ?>"
-                                        class="btn btn-delete btn-sm"
-                                        onclick="return confirm('Are you sure you want to delete this event? All registrations will be lost.')"
-                                    >
-                                        <i data-lucide="trash-2"></i>
-                                        Delete
+                                    <a href="admin_all_events.php?delete=<?= $event['event_id'] ?>"
+                                       class="btn btn-delete btn-sm"
+                                       onclick="return confirm('Delete this event? All registrations will be lost.')">
+                                        <i data-lucide="trash-2"></i> Delete
                                     </a>
                                 </td>
                             </tr>
@@ -178,13 +154,11 @@ $events = $stmt->get_result();
 
     <script>
         lucide.createIcons();
-
         setTimeout(() => {
-            const alerts = document.querySelectorAll('.management-alert');
-            alerts.forEach(alert => {
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-10px)';
-                setTimeout(() => alert.remove(), 300);
+            document.querySelectorAll('.management-alert').forEach(a => {
+                a.style.opacity = '0';
+                a.style.transform = 'translateY(-10px)';
+                setTimeout(() => a.remove(), 300);
             });
         }, 5000);
     </script>

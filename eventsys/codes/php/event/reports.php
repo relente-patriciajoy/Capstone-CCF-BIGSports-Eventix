@@ -46,21 +46,40 @@ if ($selected_event) {
 
 function generateEventReport($conn, $event_id) {
     $data = [];
-    $q = $conn->prepare("SELECT e.title, e.start_time, e.end_time, e.capacity, e.price, v.name as venue, c.category_name FROM event e JOIN venue v ON e.venue_id = v.venue_id LEFT JOIN event_category c ON e.category_id = c.category_id WHERE e.event_id = ?");
-    $q->bind_param("i", $event_id); $q->execute(); $data['event'] = $q->get_result()->fetch_assoc(); $q->close();
+    // Removed price from query
+    $q = $conn->prepare("
+        SELECT e.title, e.start_time, e.end_time, e.capacity,
+               v.name as venue, c.category_name
+        FROM event e
+        JOIN venue v ON e.venue_id = v.venue_id
+        LEFT JOIN event_category c ON e.category_id = c.category_id
+        WHERE e.event_id = ?
+    ");
+    $q->bind_param("i", $event_id); $q->execute();
+    $data['event'] = $q->get_result()->fetch_assoc(); $q->close();
 
     $q = $conn->prepare("SELECT COUNT(*) as total_registrations, SUM(CASE WHEN status='confirmed' THEN 1 ELSE 0 END) as confirmed FROM registration WHERE event_id = ?");
-    $q->bind_param("i", $event_id); $q->execute(); $data['reg'] = $q->get_result()->fetch_assoc(); $q->close();
+    $q->bind_param("i", $event_id); $q->execute();
+    $data['reg'] = $q->get_result()->fetch_assoc(); $q->close();
 
     $q = $conn->prepare("SELECT SUM(CASE WHEN a.check_in_time IS NOT NULL THEN 1 ELSE 0 END) as checked_in, SUM(CASE WHEN a.check_out_time IS NOT NULL THEN 1 ELSE 0 END) as checked_out FROM registration r LEFT JOIN attendance a ON r.registration_id = a.registration_id WHERE r.event_id = ?");
-    $q->bind_param("i", $event_id); $q->execute(); $data['att'] = $q->get_result()->fetch_assoc(); $q->close();
+    $q->bind_param("i", $event_id); $q->execute();
+    $data['att'] = $q->get_result()->fetch_assoc(); $q->close();
 
-    $q = $conn->prepare("SELECT u.first_name, u.middle_name, u.last_name, u.email, r.registration_date, r.table_number, r.status as reg_status, a.check_in_time, a.check_out_time, a.status as att_status FROM registration r JOIN user u ON r.user_id = u.user_id LEFT JOIN attendance a ON r.registration_id = a.registration_id WHERE r.event_id = ? ORDER BY u.last_name, u.first_name");
-    $q->bind_param("i", $event_id); $q->execute(); $data['participants'] = $q->get_result(); $q->close();
+    $q = $conn->prepare("
+        SELECT u.first_name, u.middle_name, u.last_name, u.email,
+               r.registration_date, r.table_number, r.status as reg_status,
+               a.check_in_time, a.check_out_time, a.status as att_status
+        FROM registration r
+        JOIN user u ON r.user_id = u.user_id
+        LEFT JOIN attendance a ON r.registration_id = a.registration_id
+        WHERE r.event_id = ? ORDER BY u.last_name, u.first_name
+    ");
+    $q->bind_param("i", $event_id); $q->execute();
+    $data['participants'] = $q->get_result(); $q->close();
 
     $total = $data['reg']['total_registrations'];
-    $data['rate']    = $total > 0 ? round(($data['att']['checked_in'] / $total) * 100, 2) : 0;
-    $data['revenue'] = $total * $data['event']['price'];
+    $data['rate'] = $total > 0 ? round(($data['att']['checked_in'] / $total) * 100, 2) : 0;
     return $data;
 }
 ?>
@@ -97,10 +116,14 @@ function generateEventReport($conn, $event_id) {
                     <select name="event_id" required>
                         <option value="">-- Select Event --</option>
                         <?php $events->data_seek(0); while ($ev = $events->fetch_assoc()): ?>
-                            <option value="<?= $ev['event_id'] ?>" <?= $selected_event == $ev['event_id'] ? 'selected' : '' ?>><?= htmlspecialchars($ev['title']) ?> — <?= date('M j, Y', strtotime($ev['start_time'])) ?></option>
+                            <option value="<?= $ev['event_id'] ?>" <?= $selected_event == $ev['event_id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($ev['title']) ?> — <?= date('M j, Y', strtotime($ev['start_time'])) ?>
+                            </option>
                         <?php endwhile; ?>
                     </select>
-                    <button type="submit" class="eh-btn eh-btn-primary"><i data-lucide="search" style="width:16px;height:16px;"></i> Generate Report</button>
+                    <button type="submit" class="eh-btn eh-btn-primary">
+                        <i data-lucide="search" style="width:16px;height:16px;"></i> Generate Report
+                    </button>
                 </form>
             </div>
 
@@ -115,7 +138,6 @@ function generateEventReport($conn, $event_id) {
                     <div>
                         <p><strong>Venue:</strong> <?= htmlspecialchars($report_data['event']['venue']) ?></p>
                         <p><strong>Capacity:</strong> <?= $report_data['event']['capacity'] ?> people</p>
-                        <p><strong>Price:</strong> ₱<?= number_format($report_data['event']['price'], 2) ?></p>
                     </div>
                 </div>
 
@@ -123,45 +145,50 @@ function generateEventReport($conn, $event_id) {
                     <div class="eh-stat-card"><div class="eh-stat-number"><?= $report_data['reg']['total_registrations'] ?></div><div class="eh-stat-label">Total Registrations</div></div>
                     <div class="eh-stat-card"><div class="eh-stat-number"><?= $report_data['att']['checked_in'] ?></div><div class="eh-stat-label">Total Attended</div></div>
                     <div class="eh-stat-card"><div class="eh-stat-number"><?= $report_data['rate'] ?>%</div><div class="eh-stat-label">Attendance Rate</div></div>
-                    <div class="eh-stat-card"><div class="eh-stat-number">₱<?= number_format($report_data['revenue'], 0) ?></div><div class="eh-stat-label">Total Revenue</div></div>
                 </div>
 
                 <h3><i data-lucide="users" style="width:18px;height:18px;"></i> Participant Journey Report</h3>
 
                 <div class="eh-export-bar">
-                    <button class="eh-btn eh-btn-secondary" onclick="exportToExcel()"><i data-lucide="file-spreadsheet" style="width:16px;height:16px;"></i> Export to Excel</button>
-                    <button class="eh-btn eh-btn-secondary" onclick="window.print()"><i data-lucide="file-text" style="width:16px;height:16px;"></i> Print / PDF</button>
+                    <button class="eh-btn eh-btn-secondary" onclick="exportToExcel()">
+                        <i data-lucide="file-spreadsheet" style="width:16px;height:16px;"></i> Export to Excel
+                    </button>
+                    <button class="eh-btn eh-btn-secondary" onclick="window.print()">
+                        <i data-lucide="file-text" style="width:16px;height:16px;"></i> Print / PDF
+                    </button>
                 </div>
 
                 <div class="eh-table-wrap">
-                <table class="eh-table" id="participantTable">
-                    <thead>
-                        <tr><th>Name</th><th>Email</th><th>Registered</th><th>Table</th><th>Check-In</th><th>Check-Out</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($p = $report_data['participants']->fetch_assoc()): ?>
+                    <table class="eh-table" id="participantTable">
+                        <thead>
                             <tr>
-                                <td><?= htmlspecialchars(trim($p['first_name'] . ' ' . ($p['middle_name'] ?: '') . ' ' . $p['last_name'])) ?></td>
-                                <td><?= htmlspecialchars($p['email']) ?></td>
-                                <td><?= date('M j, Y', strtotime($p['registration_date'])) ?></td>
-                                <td><?= $p['table_number'] ?: '—' ?></td>
-                                <td><?= $p['check_in_time'] ? date('g:i A', strtotime($p['check_in_time'])) : '—' ?></td>
-                                <td><?= $p['check_out_time'] ? date('g:i A', strtotime($p['check_out_time'])) : '—' ?></td>
-                                <td><?php if ($p['att_status'] === 'present' || $p['check_in_time']): ?>
-                                    <span class="eh-badge eh-badge-success"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Present</span>
-                                <?php else: ?>
-                                    <span class="eh-badge eh-badge-danger"><i data-lucide="x-circle" style="width:13px;height:13px;"></i> Absent</span>
-                                <?php endif; ?></td>
+                                <th>Name</th><th>Email</th><th>Registered</th>
+                                <th>Table</th><th>Check-In</th><th>Check-Out</th><th>Status</th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php while ($p = $report_data['participants']->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars(trim($p['first_name'].' '.($p['middle_name']?:'').' '.$p['last_name'])) ?></td>
+                                    <td><?= htmlspecialchars($p['email']) ?></td>
+                                    <td><?= date('M j, Y', strtotime($p['registration_date'])) ?></td>
+                                    <td><?= $p['table_number'] ?: '—' ?></td>
+                                    <td><?= $p['check_in_time'] ? date('g:i A', strtotime($p['check_in_time'])) : '—' ?></td>
+                                    <td><?= $p['check_out_time'] ? date('g:i A', strtotime($p['check_out_time'])) : '—' ?></td>
+                                    <td><?php if ($p['att_status'] === 'present' || $p['check_in_time']): ?>
+                                        <span class="eh-badge eh-badge-success"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Present</span>
+                                    <?php else: ?>
+                                        <span class="eh-badge eh-badge-danger"><i data-lucide="x-circle" style="width:13px;height:13px;"></i> Absent</span>
+                                    <?php endif; ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 </main>
-<script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
 function exportToExcel() {
