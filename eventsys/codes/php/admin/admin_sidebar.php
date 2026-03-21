@@ -111,7 +111,13 @@
 })();
 
 function toggleDropdown(toggle) {
-    toggle.closest('.dropdown-nav').classList.toggle('open');
+    const dropdownNav = toggle.closest('.dropdown-nav');
+    dropdownNav.classList.toggle('open');
+    // Add/remove class on nav so sibling links shrink when dropdown is open
+    const nav = dropdownNav.closest('nav');
+    if (nav) {
+        nav.classList.toggle('dropdown-expanded', dropdownNav.classList.contains('open'));
+    }
 }
 
 if (typeof lucide !== 'undefined') lucide.createIcons();

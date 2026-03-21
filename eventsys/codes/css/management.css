@@ -838,6 +838,24 @@
     margin-left: 260px;
   }
   .stats-row { grid-template-columns: repeat(4, 1fr); }
+
+  /* Sidebar — full normal size on wide screens */
+  #adminSidebar nav a {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  #adminSidebar nav a svg,
+  #adminSidebar nav a i {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
+  }
+  #adminSidebar .logo { font-size: 1.6rem; }
+  #adminSidebar .dropdown-toggle {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+  }
 }
 
 /* Small phone tab buttons */
@@ -1231,4 +1249,194 @@
     .file-actions { gap: 6px; }
     .file-actions .btn { font-size: 0.78rem; padding: 7px 10px; }
     .btn-label { display: none; }
+}
+
+/* ============================================
+   ADMIN SIDEBAR DROPDOWN — MOBILE FIX
+   ============================================ */
+
+/* Sidebar nav scrolls when dropdown opens */
+.sidebar nav {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 20px;
+}
+
+/* Dropdown nav container */
+.dropdown-nav { position: relative; }
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+  user-select: none;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-toggle:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.3) 0%, rgba(255, 107, 130, 0.2) 100%);
+  border-left-color: #e63946;
+}
+
+.dropdown-toggle span:last-child {
+  margin-left: auto;
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+  opacity: 0.6;
+}
+
+.dropdown-nav.open .dropdown-toggle span:last-child {
+  transform: rotate(180deg);
+}
+
+.dropdown-nav.open .dropdown-toggle {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.2) 0%, rgba(255, 107, 130, 0.1) 100%);
+  border-left-color: rgba(230, 57, 70, 0.5);
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+  display: none;
+  flex-direction: column;
+  margin-left: 28px;
+  padding-left: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  border-left: 2px solid rgba(230, 57, 70, 0.3);
+  gap: 2px;
+}
+
+.dropdown-nav.open .dropdown-menu { display: flex; }
+
+.dropdown-menu a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: 400;
+  display: block;
+  white-space: nowrap;
+}
+
+.dropdown-menu a:hover {
+  background: rgba(230, 57, 70, 0.15);
+  color: #ffffff;
+  padding-left: 16px;
+}
+
+.dropdown-menu a.active {
+  background: rgba(230, 57, 70, 0.2);
+  color: #ffffff;
+  font-weight: 600;
+  border-left: 2px solid #e63946;
+  padding-left: 16px;
+}
+
+/* Sidebar nav links — never wrap text, keep icon visible */
+#adminSidebar nav a,
+#adminSidebar .dropdown-toggle {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Icon always visible — never shrink or clip */
+#adminSidebar nav a svg,
+#adminSidebar nav a i,
+#adminSidebar .dropdown-toggle svg,
+#adminSidebar .dropdown-toggle i {
+  flex-shrink: 0;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Text label clips with ellipsis — only the text, not the icon */
+#adminSidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Mobile: ensure sidebar scrolls when dropdown opens */
+@media (max-width: 1279px) {
+  #adminSidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #adminSidebar nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 24px;
+  }
+}
+
+/* ── Volunteer Management text size in dropdown context ── */
+
+/* At 768px — make volunteer management text smaller */
+@media (max-width: 768px) {
+  #adminSidebar nav a[href*="volunteer"] {
+    font-size: 0.78rem;
+  }
+  #adminSidebar nav a[href*="volunteer"] svg,
+  #adminSidebar nav a[href*="volunteer"] i {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px;
+  }
+}
+
+/* At 1440px — slightly smaller for volunteer management only */
+@media (min-width: 1440px) {
+  #adminSidebar nav a[href*="volunteer"] {
+    font-size: 0.82rem;
+  }
+}
+
+/* ── When dropdown is open (nav gets .dropdown-expanded class via JS) ── */
+#adminSidebar nav.dropdown-expanded a {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 768px) {
+  #adminSidebar nav.dropdown-expanded a {
+    font-size: 0.75rem;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  #adminSidebar nav.dropdown-expanded a svg,
+  #adminSidebar nav.dropdown-expanded a i {
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px;
+  }
+}
+
+@media (min-width: 1440px) {
+  #adminSidebar nav.dropdown-expanded a {
+    font-size: 0.8rem;
+  }
 }
