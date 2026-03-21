@@ -189,7 +189,8 @@ $result = $stmt->get_result();
             ?>
             <div class="card <?= $event_ended ? 'event-past-card' : '' ?>"
                  data-end="<?= $end_unix ?>"
-                 data-title="<?= strtolower(htmlspecialchars($row['title'])) ?>">
+                 data-title="<?= strtolower(htmlspecialchars($row['title'])) ?>"
+                 >
 
                 <h3><?= htmlspecialchars($row['title']) ?></h3>
                 <?php
@@ -241,6 +242,7 @@ $result = $stmt->get_result();
                         <em>Attendance complete</em>
                     </div>
                 <?php endif; ?>
+                </div>
             </div>
             <?php endwhile; ?>
 

@@ -104,7 +104,8 @@ $result = $stmt->get_result();
             <div class="card <?= $is_past ? 'event-past-card' : '' ?>"
                  data-end="<?= $end_unix ?>"
                  data-title="<?= strtolower(htmlspecialchars($row['title'])) ?>"
-                 data-venue="<?= strtolower(htmlspecialchars($row['venue'])) ?>">
+                 data-venue="<?= strtolower(htmlspecialchars($row['venue'])) ?>"
+                 >
 
                 <?php if ($is_past): ?>
                     <span class="event-past-badge">
