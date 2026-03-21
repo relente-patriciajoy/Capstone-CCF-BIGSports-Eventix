@@ -83,6 +83,7 @@ $role_colors = ['ushering'=>'#3b82f6','admin'=>'#f59e0b','technical'=>'#8b5cf6']
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/sidebar.css">
     <link rel="stylesheet" href="../../../css/management.css">
+    <link rel="stylesheet" href="../../../css/volunteer.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -110,14 +111,16 @@ $role_colors = ['ushering'=>'#3b82f6','admin'=>'#f59e0b','technical'=>'#8b5cf6']
     <?php endif; ?>
 
     <!-- Action bar -->
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
-        <button onclick="openQR()" class="btn btn-primary">
-            <i data-lucide="qr-code" style="width:15px;height:15px;"></i> Show QR Code
-        </button>
-        <a href="create.php?edit=<?= $id ?>" class="btn btn-secondary">
+    <div class="vol-action-bar">
+        <a href="index.php" class="btn btn-secondary vol-action-btn">
+            <i data-lucide="arrow-left" style="width:15px;height:15px;"></i> Back to List
+        </a>
+        <a href="create.php?edit=<?= $id ?>" class="btn btn-secondary vol-action-btn">
             <i data-lucide="edit" style="width:15px;height:15px;"></i> Edit Event
         </a>
-        <a href="index.php" class="btn btn-secondary">← Back to List</a>
+        <button onclick="openQR()" class="btn btn-primary vol-action-btn">
+            <i data-lucide="qr-code" style="width:15px;height:15px;"></i> Show QR Code
+        </button>
     </div>
 
     <!-- Role cards -->
@@ -200,24 +203,25 @@ $role_colors = ['ushering'=>'#3b82f6','admin'=>'#f59e0b','technical'=>'#8b5cf6']
 </main>
 
 <!-- QR Modal -->
-<div id="qrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:white;border-radius:16px;padding:32px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
-        <h3 style="margin-bottom:6px;">Volunteer QR Code</h3>
-        <p style="color:#6b7280;font-size:0.85rem;margin-bottom:20px;">
+<div id="qrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:12px;">
+    <div style="background:white;border-radius:16px;padding:24px 16px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);box-sizing:border-box;">
+        <h3 style="margin-bottom:6px;font-size:1rem;">Volunteer QR Code</h3>
+        <p style="color:#6b7280;font-size:0.8rem;margin-bottom:16px;">
             Share this with potential volunteers. They'll sign in or register then choose their role.
         </p>
-        <div style="background:#f9f9f9;padding:16px;border-radius:12px;border:3px dashed #800020;display:inline-block;">
+        <div style="background:#f9f9f9;padding:12px;border-radius:12px;border:3px dashed #800020;display:block;width:100%;box-sizing:border-box;">
             <img src="<?= htmlspecialchars($qr_web_path) ?>"
                  alt="Volunteer QR Code"
-                 style="width:220px;height:220px;display:block;">
+                 style="width:100%;max-width:220px;height:auto;display:block;margin:0 auto;">
         </div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;">
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
             <a href="<?= htmlspecialchars($qr_web_path) ?>&download=1"
                download="volunteer-qr-<?= $id ?>.png"
-               class="btn btn-primary btn-sm">
+               class="btn btn-primary btn-sm"
+               style="width:120px;">
                 <i data-lucide="download" style="width:13px;height:13px;"></i> Download
             </a>
-            <button onclick="closeQR()" class="btn btn-secondary btn-sm">Close</button>
+            <button onclick="closeQR()" class="btn btn-secondary btn-sm vol-close-btn" style="width:120px;">Close</button>
         </div>
     </div>
 </div>

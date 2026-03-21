@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </select>
                         </div>
                         <button type="button" onclick="this.closest('.role-row').remove()"
-                                class="btn btn-delete btn-sm" style="margin-top:20px;">
+                                class="btn btn-delete btn-sm">
                             <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
                         </button>
                     </div>
@@ -203,6 +203,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <script id="users-data" type="application/json"><?= json_encode($all_users) ?></script>
     </form>
 </main>
+
+
 
 <script>
 lucide.createIcons();
@@ -229,7 +231,7 @@ function addRole() {
             <select name="team_lead[]">${opts}</select>
         </div>
         <button type="button" onclick="this.closest('.role-row').remove()"
-                class="btn btn-delete btn-sm" style="margin-top:20px;">
+                class="btn btn-delete btn-sm">
             <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
         </button>`;
     document.getElementById('roles-container').appendChild(row);

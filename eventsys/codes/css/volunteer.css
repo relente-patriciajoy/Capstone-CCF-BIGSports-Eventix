@@ -185,3 +185,41 @@
         gap: 6px;
     }
 }
+/* ============================================
+   VOLUNTEER DETAIL — ACTION BAR & MODAL FIXES
+   ============================================ */
+
+.vol-action-bar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.vol-action-btn {
+    width: auto !important;
+    flex: none;
+    justify-content: center;
+    white-space: nowrap;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+/* Close button white text on hover */
+.vol-close-btn:hover {
+    background: #6b7280 !important;
+    color: white !important;
+    border-color: #6b7280 !important;
+}
+
+@media (max-width: 600px) {
+    .vol-action-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .vol-action-btn {
+        width: 100% !important;
+    }
+}

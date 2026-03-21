@@ -456,9 +456,11 @@
   z-index: 1000;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  /* ── ADDED: hidden by default, shown via JS ── */
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
 }
 
-/* Sidebar Logo */
 .sidebar .logo {
   font-size: 1.6rem;
   font-weight: 700;
@@ -484,7 +486,6 @@
   border-radius: 2px;
 }
 
-/* Sidebar Close Button — hidden; overlay click closes sidebar */
 .sidebar-close {
   display: none !important;
   position: absolute;
@@ -546,7 +547,6 @@
   box-shadow: 0 4px 16px rgba(230, 57, 70, 0.3);
 }
 
-/* Admin Badge */
 .admin-badge {
   background: #e63946;
   color: white;
@@ -563,8 +563,7 @@
 }
 
 /* ============================================
-   CARD TOOLBAR — heading + action button row
-   (replaces inline style="display:flex;justify-content:space-between")
+   CARD TOOLBAR
    ============================================ */
 
 .card-toolbar {
@@ -578,14 +577,12 @@
 
 .card-toolbar h2 { margin: 0; flex-shrink: 0; }
 
-/* ── Form vertical stack ── */
 .admin-form-col {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* ── Recent activity two-column grid ── */
 .recent-activity-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -593,7 +590,6 @@
   margin-top: 32px;
 }
 
-/* ── Dashboard quick-actions ── */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -629,7 +625,6 @@
 
 .action-card p { font-size: 0.9rem; color: #6b6b6b; margin: 0; }
 
-/* ── Attendance search input ── */
 .attendance-search {
   width: 100%;
   padding: 12px;
@@ -649,7 +644,7 @@
 }
 
 /* ============================================
-   MODAL TAB NAVIGATION — Fix 2 (tab overflow)
+   TAB NAVIGATION
    ============================================ */
 
 .tab-navigation {
@@ -690,7 +685,7 @@
 .tab-content.active { display: block; }
 
 /* ============================================
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE BREAKPOINTS — UNTOUCHED FROM ORIGINAL
    ============================================ */
 
 /* Small phones */
@@ -705,14 +700,12 @@
 
 /* Mobile (< 768px) */
 @media (max-width: 767px) {
-  /* Sidebar full height from top — no header bar to avoid */
   .sidebar {
     top: 0 !important;
     height: 100vh !important;
     padding-top: 0;
   }
 
-  /* Keep sidebar logo visible — it's the only title inside the panel */
   .sidebar .logo {
     display: block;
     padding: 20px;
@@ -739,40 +732,20 @@
   }
 
   .management-header { padding: 20px 16px; }
-
   .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-
   .management-search { flex-direction: column; }
-
   .management-table th,
   .management-table td { padding: 10px 8px; font-size: 0.85rem; }
-
   .management-table .actions { flex-direction: column; align-items: stretch; gap: 6px; }
   .management-table .actions .btn { width: 100%; justify-content: center; }
-
   .form-row { grid-template-columns: 1fr; }
-
-  /* Admin header */
   .admin-header h1,
   .management-header.admin-style h1 { font-size: 1.8rem; }
-
   .admin-badge { font-size: 0.7rem; padding: 5px 10px; }
-
-  /* Recent activity stacks */
   .recent-activity-grid { grid-template-columns: 1fr; gap: 16px; }
-
-  /* Quick actions 2-col on mobile */
   .quick-actions { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-
-  /* Card toolbar stacks on mobile */
-  .card-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
+  .card-toolbar { flex-direction: column; align-items: flex-start; }
   .card-toolbar .btn { width: 100%; justify-content: center; }
-
-  /* Sidebar nav */
   .sidebar nav { padding: 12px 8px; padding-bottom: 60px; }
   .sidebar nav a { padding: 14px 16px; font-size: 0.95rem; }
 }
@@ -799,26 +772,21 @@
     max-width: 240px;
   }
 
-  /* Sidebar is a floating overlay on tablet — content takes full width */
   .management-content {
     margin-left: 0;
     width: 100%;
     padding: 24px;
-    padding-top: 72px; /* clear the floating hamburger */
+    padding-top: 72px;
   }
 
   .stats-row { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-
   .form-row { grid-template-columns: repeat(2, 1fr); }
-
   .sidebar nav a { padding: 12px 14px; font-size: 0.9rem; }
 }
 
 /* Desktop (1024px+) */
 @media (min-width: 1024px) {
-  /* Restore sidebar logo on desktop */
   .sidebar .logo { display: block; }
-
   .sidebar-close { display: none !important; }
 
   .management-content {
@@ -831,33 +799,24 @@
 
   .management-header { padding: 32px; }
   .management-header h1 { font-size: 2.25rem; }
-
   .stats-row { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-
   .management-card { padding: 28px; }
-
   .management-search { flex-direction: row; max-width: 100%; }
   .management-search input  { flex: 1; min-width: 0; }
   .management-search button { width: auto; min-width: 120px; flex-shrink: 0; }
-
   .form-row { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
   .form-actions { flex-direction: row; }
   .form-actions button,
   .form-actions a { flex: 1; }
-
   .management-table:hover tbody tr:hover { background: #f9f9f9; }
-
-  /* Card toolbar stays inline on desktop */
   .card-toolbar { flex-direction: row; align-items: center; }
   .card-toolbar .btn { width: auto; }
-
-  /* Quick actions full grid */
   .quick-actions { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-  /* Admin header full size */
   .admin-header h1,
   .management-header.admin-style h1 { font-size: 2.5rem; }
+
+  /* ── ADDED: show sidebar permanently on desktop ── */
+  .sidebar { transform: translateX(0) !important; }
 }
 
 /* Large Desktop (1440px+) */
@@ -867,16 +826,15 @@
     max-width: calc(100vw - 260px);
     margin-left: 260px;
   }
-
   .stats-row { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* Small phone tab buttons */
 @media (max-width: 480px) {
-  .tab-btn              { padding: 10px 14px; font-size: 0.82rem; }
+  .tab-btn { padding: 10px 14px; font-size: 0.82rem; }
   .admin-header h1,
   .management-header.admin-style h1 { font-size: 1.5rem; }
-  .quick-actions        { grid-template-columns: 1fr; }
+  .quick-actions { grid-template-columns: 1fr; }
 }
 
 /* PWA Safe Areas */
@@ -900,7 +858,7 @@
 }
 
 /* ============================================
-   USER PROMOTIONS MODAL — moved from inline <style>
+   USER PROMOTIONS MODAL
    ============================================ */
 
 .permissions-grid {
@@ -918,10 +876,7 @@
   transition: all 0.3s ease;
 }
 
-.permission-item:hover {
-  border-color: #e63946;
-  background: #fff5f5;
-}
+.permission-item:hover { border-color: #e63946; background: #fff5f5; }
 
 .permission-item label {
   display: flex;
@@ -950,14 +905,11 @@
   letter-spacing: 0.5px;
 }
 
-/* User modal overlay */
 .user-modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   overflow-y: auto;
@@ -965,7 +917,6 @@
   box-sizing: border-box;
 }
 
-/* Modal content box */
 .modal-content {
   background: white;
   max-width: 900px;
@@ -994,8 +945,7 @@
   cursor: pointer;
   color: #6b6b6b;
   padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1017,25 +967,14 @@
 .permission-summary h4 { color: #0369a1; margin: 0 0 8px 0; font-size: 0.95rem; }
 .permission-summary p  { color: #075985; margin: 0; font-size: 0.9rem; }
 
-/* Mobile modal adjustments */
 @media (max-width: 768px) {
-  .modal-content {
-    margin: 10px auto;
-    padding: 20px;
-    border-radius: 12px;
-  }
-
-  .permissions-grid {
-    grid-template-columns: 1fr;
-  }
-
+  .modal-content { margin: 10px auto; padding: 20px; border-radius: 12px; }
+  .permissions-grid { grid-template-columns: 1fr; }
   .user-modal { padding: 10px; }
 }
 
 /* ============================================
    ADMIN MOBILE HAMBURGER
-   Floating button only — no title bar
-   Same pattern as participant/event_head sidebar
    ============================================ */
 
 .mobile-header {
@@ -1046,10 +985,8 @@
   z-index: 1002;
 }
 
-/* Hamburger button */
 .hamburger-menu {
-  width: 44px;
-  height: 44px;
+  width: 44px; height: 44px;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border: none;
   border-radius: 10px;
@@ -1065,20 +1002,17 @@
 }
 
 .hamburger-menu span {
-  width: 22px;
-  height: 2px;
+  width: 22px; height: 2px;
   background: white;
   border-radius: 2px;
   display: block;
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* Animated X when open */
 .hamburger-menu.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger-menu.active span:nth-child(2) { opacity: 0; transform: translateX(-16px); }
 .hamburger-menu.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Sidebar overlay */
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -1091,26 +1025,78 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
-.sidebar-overlay.active {
-  display: block;
-  opacity: 1;
-}
+.sidebar-overlay.active { display: block; opacity: 1; }
 
-/* Show hamburger on mobile + tablet */
+/* Show hamburger on mobile + tablet (unchanged from original) */
 @media (max-width: 1023px) {
   .mobile-header { display: flex; }
-
-  /* Nudge main content so cards don't hide under the hamburger */
   .management-content { padding-top: 72px; }
 }
 
-/* Hide on desktop */
-@media (min-width: 1024px) {
+/* Hide hamburger on desktop (1280px+) */
+@media (min-width: 1280px) {
   .mobile-header    { display: none !important; }
   .sidebar-overlay  { display: none !important; }
   .management-content { padding-top: 32px; }
 }
 
-.btn-primary:hover { 
-  color: white !important 
+/* ── ADDED: show hamburger at 1024px–1279px (after desktop rule to override) ── */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .mobile-header { display: flex !important; }
+  .management-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 72px !important;
+  }
+  .sidebar { transform: translateX(-100%) !important; }
+  .sidebar.mobile-open { transform: translateX(0) !important; }
 }
+
+/* ============================================
+   ADDED: Role row alignment fix
+   ============================================ */
+
+.role-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.role-row .form-group {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.role-row .form-group label { font-size: 0.82rem; margin-bottom: 4px; }
+.role-row .form-group select { padding: 8px 10px; font-size: 0.85rem; }
+
+.role-row .btn-delete {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .role-row { flex-direction: column; }
+  .role-row .form-group { width: 100%; }
+  .role-row .btn-delete { width: 100%; height: auto; padding: 8px; }
+}
+
+/* ============================================
+   ADDED: btn-primary hover white text fix
+   ============================================ */
+
+.btn-primary:hover { color: white !important; }
