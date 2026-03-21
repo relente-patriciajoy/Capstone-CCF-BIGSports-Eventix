@@ -69,7 +69,7 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
             <i data-lucide="layout-dashboard"></i> Event Management
         </a>
         <a href="../event/table_management.php" class="<?= $current_page === 'table_management.php' ? 'active' : '' ?>">
-            <i data-lucide="layout-grid"></i> Table Management
+            <i data-lucide="armchair"></i> Table Management
         </a>
         <?php endif; ?>
 
