@@ -5,14 +5,13 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: ../auth/index.php");
     exit();
 }
-// No requireRole() = all logged-in users
 
 include('../../includes/db.php');
 
-$user_id = $_SESSION['user_id'];
+$user_id   = $_SESSION['user_id'];
 $full_name = $_SESSION['full_name'];
 
-// Get user role
+// Get user role from DB (source of truth)
 $stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -20,7 +19,6 @@ $stmt->bind_result($role);
 $stmt->fetch();
 $stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,53 +32,74 @@ $stmt->close();
   <?php endif; ?>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ── Dashboard card links — always visible, red, with arrow ── */
+    .grid-section .card a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 16px;
+        color: #e63946;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.2s, gap 0.2s;
+    }
+    .grid-section .card a::after {
+        content: ' →';
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+    .grid-section .card a:hover {
+        color: #c72c3a;
+        gap: 10px;
+    }
+  </style>
 </head>
 
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
-  <!-- Sidebar -->
   <?php include('../components/sidebar.php'); ?>
 
   <main class="main-content">
-      <header class="banner <?= $role === 'event_head' ? 'event-head-banner' : '' ?>">
-          <div>
-              <?php if ($role === 'event_head'): ?>
-              <div class="event-head-badge">
-                  <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i>
-                  Event Organizer
-              </div>
-              <?php endif; ?>
-              <h1>Hi, <?= htmlspecialchars($full_name) ?></h1>
-              <p>Welcome to your dashboard. Let's manage and discover events easily.</p>
-          </div>
-          <img src="../../assets/eventix-logo.png" alt="Eventix logo" />
-      </header>
-
-      <section class="grid-section">
-        <div class="card">
-          <h3>Browse Events</h3>
-          <p>Find and register for upcoming events.</p>
-          <a href="events.php">Explore</a>
-        </div>
-
-        <div class="card">
-          <h3>My Registrations</h3>
-          <p>View events you've registered for.</p>
-          <a href="my_events.php">View</a>
-        </div>
-
+    <header class="banner <?= $role === 'event_head' ? 'event-head-banner' : '' ?>">
+      <div>
         <?php if ($role === 'event_head'): ?>
-        <div class="card">
-            <h3>Manage Events</h3>
-            <p>Create and update the events you organize.</p>
-            <a href="../event/manage_events.php">Manage</a>
+        <div class="event-head-badge">
+          <i data-lucide="briefcase" style="width:14px;height:14px;"></i>
+          Event Organizer
         </div>
         <?php endif; ?>
-      </section>
+        <h1>Hi, <?= htmlspecialchars($full_name) ?></h1>
+        <p>Welcome to your dashboard. Let's manage and discover events easily.</p>
+      </div>
+      <img src="../../assets/eventix-logo.png" alt="Eventix logo" />
+    </header>
+
+    <section class="grid-section">
+      <div class="card">
+        <h3>Browse Events</h3>
+        <p>Find and register for upcoming events.</p>
+        <a href="events.php">Explore</a>
+      </div>
+
+      <div class="card">
+        <h3>My Registrations</h3>
+        <p>View events you've registered for.</p>
+        <a href="my_events.php">View</a>
+      </div>
+
+      <?php if ($role === 'event_head'): ?>
+      <div class="card">
+        <h3>Manage Events</h3>
+        <p>Create and update the events you organize.</p>
+        <a href="../event/manage_events.php">Manage</a>
+      </div>
+      <?php endif; ?>
+    </section>
   </main>
+
   <script src="../../js/script.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    lucide.createIcons();
-  </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
