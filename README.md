@@ -239,6 +239,16 @@ Registration-System/
             └── qr/              # view_qr.php, generate_qr.php
 ```
 
+## 📜 License & Ownership
+
+This project is the **original work of Patricia Joy Relente**.
+
+Licensed under the **GNU General Public License v3.0**. 
+
+**Copyright © 2026 Patricia Joy Relente**
+
+> **Note to Users:** This license protects the originality of the project. You are free to use, modify, and distribute the code, but you **must** keep the original author's credit and any derivative work must remain open-source under the same GPLv3 terms.
+
 ---
 
 ## 👤 Developer
