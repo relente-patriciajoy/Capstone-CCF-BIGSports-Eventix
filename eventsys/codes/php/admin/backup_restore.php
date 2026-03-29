@@ -60,7 +60,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_backup'])) {
         $backup_file = $backup_dir . $filename;
         
         // Execute mysqldump - Windows XAMPP
-        $command = '"C:\xampp\mysql\bin\mysqldump" --user=root --host=localhost event_registration > "' . $backup_file . '"';
+        // Use environment variable for DB credentials (Railway) or fall back to local defaults
+        $db_host_cmd = getenv('DB_HOST') ?: 'localhost';
+        $db_user_cmd = getenv('DB_USER') ?: 'root';
+        $db_pass_cmd = getenv('DB_PASS') ?: '';
+        $db_name_cmd = getenv('DB_NAME') ?: 'event_registration';
+        $db_port_cmd = getenv('DB_PORT') ?: '3306';
+
+        $pass_arg = !empty($db_pass_cmd) ? '--password=' . escapeshellarg($db_pass_cmd) : '';
+
+        // Linux (Railway): just 'mysqldump', Windows XAMPP: full path
+        $mysqldump = PHP_OS_FAMILY === 'Windows'
+            ? '"C:\\xampp\\mysql\\bin\\mysqldump"'
+            : 'mysqldump';
+
+        $command = $mysqldump . ' --user=' . escapeshellarg($db_user_cmd)
+            . ' --host=' . escapeshellarg($db_host_cmd)
+            . ' --port=' . escapeshellarg($db_port_cmd)
+            . ' ' . $pass_arg
+            . ' ' . escapeshellarg($db_name_cmd)
+            . ' > ' . escapeshellarg($backup_file);
         
         exec($command, $output, $result);
         
@@ -87,7 +106,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['restore_backup'])) {
     if (!file_exists($backup_path)) {
         $error = "Backup file not found.";
     } else {
-        $command = '"C:\xampp\mysql\bin\mysql" --user=root --host=localhost event_registration < "' . $backup_path . '"';
+        $db_host_cmd = getenv('DB_HOST') ?: 'localhost';
+        $db_user_cmd = getenv('DB_USER') ?: 'root';
+        $db_pass_cmd = getenv('DB_PASS') ?: '';
+        $db_name_cmd = getenv('DB_NAME') ?: 'event_registration';
+        $db_port_cmd = getenv('DB_PORT') ?: '3306';
+
+        $pass_arg = !empty($db_pass_cmd) ? '--password=' . escapeshellarg($db_pass_cmd) : '';
+
+        $mysql = PHP_OS_FAMILY === 'Windows'
+            ? '"C:\\xampp\\mysql\\bin\\mysql"'
+            : 'mysql';
+
+        $command = $mysql . ' --user=' . escapeshellarg($db_user_cmd)
+            . ' --host=' . escapeshellarg($db_host_cmd)
+            . ' --port=' . escapeshellarg($db_port_cmd)
+            . ' ' . $pass_arg
+            . ' ' . escapeshellarg($db_name_cmd)
+            . ' < ' . escapeshellarg($backup_path);
         
         exec($command, $output, $result);
         
