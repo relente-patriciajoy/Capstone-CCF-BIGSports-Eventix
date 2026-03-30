@@ -77,6 +77,8 @@ $all_roles       = getAllRoles($conn);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
+    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>User Permissions Management - Admin Panel</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">

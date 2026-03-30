@@ -99,6 +99,8 @@ $events = $stmt->get_result();
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
+    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>Event Management Hub</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">

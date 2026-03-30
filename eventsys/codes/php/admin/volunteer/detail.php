@@ -79,6 +79,8 @@ $role_colors = ['ushering'=>'#3b82f6','admin'=>'#f59e0b','technical'=>'#8b5cf6']
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
+    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title><?= htmlspecialchars($event['title']) ?> — Volunteer Event</title>
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/sidebar.css">
