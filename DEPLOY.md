@@ -1,83 +1,115 @@
-# Eventix — Railway Deployment Guide
+# Eventix — Render Deployment Guide
 
 ## Prerequisites
-- Railway account at railway.app
+- Render account at render.com (sign up with GitHub)
 - GitHub repository with your Eventix code
 
 ---
 
-## Step 1: Push to GitHub
-Make sure all your latest changes are pushed:
+## Step 1: Push latest changes to GitHub
 ```bash
 git add .
-git commit -m "feat: prepare for Railway deployment"
+git commit -m "chore: prepare for Render deployment"
 git push origin main
 ```
 
 ---
 
-## Step 2: Create Railway Project
-1. Go to [railway.app](https://railway.app) and sign in
-2. Click **New Project**
-3. Select **Deploy from GitHub repo**
-4. Choose your `Registration-System` repository
+## Step 2: Create a MySQL Database on Render
+1. Go to [render.com](https://render.com) and sign in with GitHub
+2. Click **New +** → **MySQL** (or PostgreSQL — but stick with MySQL)
+   > ⚠️ Note: Render's free tier uses **PostgreSQL** not MySQL. Since Eventix uses MySQL/MariaDB, you have two options:
+   > - **Option A:** Use [PlanetScale](https://planetscale.com) for free MySQL (recommended)
+   > - **Option B:** Pay $7/month for Render's MySQL instance
+3. If using **PlanetScale** (free MySQL):
+   - Go to planetscale.com → Sign up → New database
+   - Create database named `event_registration`
+   - Go to **Connect** → copy the connection string details
+   - Import your SQL via their web console
 
 ---
 
-## Step 3: Add MySQL Database
-1. In your Railway project, click **New**
-2. Select **Database → Add MySQL**
-3. Railway will automatically create a MySQL instance
-4. Click on the MySQL service → **Variables** tab
-5. Note these values: `MYSQLHOST`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQLPORT`
+## Step 3: Create a Web Service on Render
+1. Click **New +** → **Web Service**
+2. Connect your GitHub repo `Registration-System`
+3. Fill in settings:
+   - **Name:** `eventix`
+   - **Region:** Choose closest to you (Singapore for PH)
+   - **Branch:** `main`
+   - **Runtime:** `PHP` — if not available, select **Docker** (see Step 4)
+   - **Build Command:** leave empty
+   - **Start Command:** `php -S 0.0.0.0:$PORT -t eventsys/codes/php`
+4. Select **Free** tier
+5. Click **Create Web Service**
 
 ---
 
-## Step 4: Set Environment Variables
-In your main service (PHP app) → **Variables** tab, add:
+## Step 4: If PHP runtime is not available — use Docker
+Create a `Dockerfile` in your repo root:
 
-| Variable | Value |
-|----------|-------|
-| `DB_HOST` | Copy from `MYSQLHOST` |
-| `DB_USER` | Copy from `MYSQLUSER` |
-| `DB_PASS` | Copy from `MYSQLPASSWORD` |
-| `DB_NAME` | Copy from `MYSQLDATABASE` |
-| `DB_PORT` | Copy from `MYSQLPORT` |
-| `MAIL_USER` | your Gmail address |
-| `MAIL_PASS` | your Gmail App Password |
+```dockerfile
+FROM php:8.2-apache
 
----
+RUN docker-php-ext-install mysqli pdo pdo_mysql
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev && \
+    docker-php-ext-install gd
 
-## Step 5: Import Database
-1. In the MySQL service → **Connect** tab
-2. Use the connection details to connect via TablePlus, DBeaver, or phpMyAdmin
-3. Import your `event_registration.sql` file
+COPY . /var/www/html/
+RUN chown -R www-data:www-data /var/www/html
 
-Or use Railway's query panel to run the SQL directly.
+ENV APACHE_DOCUMENT_ROOT /var/www/html/eventsys/codes/php
+RUN sed -i 's|/var/www/html|${APACHE_DOCUMENT_ROOT}|g' \
+    /etc/apache2/sites-available/000-default.conf
 
----
+RUN a2enmod rewrite
 
-## Step 6: Update PHPMailer Config
-In your `notification_function.php` or wherever PHPMailer is configured, update to use environment variables:
-
-```php
-$mail->Host     = 'smtp.gmail.com';
-$mail->Username = getenv('MAIL_USER') ?: 'eventix.system@gmail.com';
-$mail->Password = getenv('MAIL_PASS') ?: 'your-local-app-password';
+EXPOSE 80
 ```
+
+Then in Render:
+- **Runtime:** Docker
+- **Dockerfile Path:** `./Dockerfile`
+
+---
+
+## Step 5: Set Environment Variables
+In your Render web service → **Environment** tab, add:
+
+| Key | Value |
+|-----|-------|
+| `DB_HOST` | your database host |
+| `DB_USER` | your database user |
+| `DB_PASS` | your database password |
+| `DB_NAME` | `event_registration` |
+| `DB_PORT` | `3306` |
+| `MAIL_USER` | `eventix.system@gmail.com` |
+| `MAIL_PASS` | `gjzo qozj stqh iomm` |
+
+---
+
+## Step 6: Import Database
+**If using PlanetScale:**
+1. Go to your PlanetScale database → **Console** tab
+2. Paste and run each SQL chunk (chunk 1 through 7) in order
+
+**If using Render MySQL:**
+1. Go to your database → **Connect** tab
+2. Use TablePlus or MySQL Workbench to connect
+3. Import `event_registration.sql`
 
 ---
 
 ## Step 7: Deploy
-Railway will auto-deploy when you push to GitHub.
-Your app will be live at a URL like:
+- Render auto-deploys when you push to GitHub
+- Your app will be live at:
 ```
-https://your-app-name.railway.app
+https://eventix.onrender.com
 ```
 
 ---
 
 ## Notes
-- The `backups/` and `qr_codes/` folders need write permissions — Railway's file system is ephemeral, so backups will be lost on redeploy. Consider using a cloud storage solution for production.
-- Free tier gives $5/month credit which is enough for a demo
-- Logs are available in Railway dashboard → **Deployments → View Logs**
+- Free tier on Render **sleeps after 15 minutes** of inactivity — first load after sleep takes ~30 seconds
+- To avoid sleep: use [UptimeRobot](https://uptimerobot.com) (free) to ping your site every 5 minutes
+- `qr_codes/` and `backups/` folders are ephemeral on Render — files are lost on redeploy
+- Logs: Render dashboard → your service → **Logs** tab
