@@ -5,8 +5,8 @@ DirectoryIndex index.php
     RewriteEngine On
     RewriteBase /
 
-    # Redirect root to auth/index.php
-    RewriteRule ^$ eventsys/codes/php/auth/index.php [L]
+    # Redirect root to login page
+    RewriteRule ^$ php/auth/index.php [L]
 </IfModule>
 
 # Security headers
@@ -16,8 +16,7 @@ DirectoryIndex index.php
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
 
-# Protect sensitive directories
+# Protect sensitive files
 <FilesMatch "\.(sql|log|env)$">
-    Order Allow,Deny
-    Deny from all
+    Require all denied
 </FilesMatch>
