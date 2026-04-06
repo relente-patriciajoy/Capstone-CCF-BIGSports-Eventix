@@ -56,6 +56,29 @@ $stmt->close();
         <div class="calendar-container">
             <div class="calendar-header">
                 <h2 class="calendar-title" id="calendar-month-year">Loading...</h2>
+
+                <!-- Month / Year Jump -->
+                <div class="calendar-jump">
+                    <select id="jump-month" class="calendar-jump-select">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                    <select id="jump-year" class="calendar-jump-select"></select>
+                    <button class="calendar-nav-btn calendar-jump-btn" id="jump-btn">
+                        <i data-lucide="search" size="16"></i> Go
+                    </button>
+                </div>
+
                 <div class="calendar-navigation">
                     <button class="calendar-nav-btn" id="prev-month">
                         <i data-lucide="chevron-left" size="18"></i> Previous

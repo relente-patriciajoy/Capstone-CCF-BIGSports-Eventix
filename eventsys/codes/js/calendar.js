@@ -11,9 +11,32 @@ class EventCalendar {
   }
 
   init() {
+    this.populateYearDropdown();
+    this.syncJumpDropdowns();
     this.fetchEvents();
     this.renderCalendar();
     this.attachEventListeners();
+  }
+
+  // ── Populate year dropdown (5 years back, 5 years forward) ──
+  populateYearDropdown() {
+    const yearSelect = document.getElementById('jump-year');
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 5; y <= currentYear + 5; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+  }
+
+  // ── Sync dropdowns to match current calendar view ──
+  syncJumpDropdowns() {
+    const monthSelect = document.getElementById('jump-month');
+    const yearSelect  = document.getElementById('jump-year');
+    if (monthSelect) monthSelect.value = this.currentDate.getMonth();
+    if (yearSelect)  yearSelect.value  = this.currentDate.getFullYear();
   }
 
   async fetchEvents() {
@@ -24,7 +47,7 @@ class EventCalendar {
         this.events = data.events.map(event => ({
           ...event,
           start_time: new Date(event.start_time),
-          end_time: new Date(event.end_time)
+          end_time:   new Date(event.end_time)
         }));
         this.renderCalendar();
       }
@@ -39,6 +62,8 @@ class EventCalendar {
 
     document.getElementById('calendar-month-year').textContent =
       this.currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    this.syncJumpDropdowns();
 
     const firstDay       = new Date(year, month, 1);
     const lastDay        = new Date(year, month + 1, 0);
@@ -120,8 +145,8 @@ class EventCalendar {
     document.getElementById('modal-event-time').textContent =
       `${event.start_time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})} - ${event.end_time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
 
-    document.getElementById('modal-event-venue').textContent    = event.venue || 'TBA';
-    document.getElementById('modal-event-capacity').textContent = `${event.capacity} people`;
+    document.getElementById('modal-event-venue').textContent       = event.venue || 'TBA';
+    document.getElementById('modal-event-capacity').textContent    = `${event.capacity} people`;
     document.getElementById('modal-event-description').textContent = event.description || 'No description available.';
 
     document.getElementById('modal-register-btn').onclick = () => {
@@ -135,6 +160,14 @@ class EventCalendar {
     document.getElementById('event-modal-overlay').classList.remove('active');
   }
 
+  // ── Jump to selected month/year ──
+  jumpToDate() {
+    const month = parseInt(document.getElementById('jump-month').value);
+    const year  = parseInt(document.getElementById('jump-year').value);
+    this.currentDate = new Date(year, month, 1);
+    this.renderCalendar();
+  }
+
   previousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.renderCalendar(); }
   nextMonth()     { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.renderCalendar(); }
   goToToday()     { this.currentDate = new Date(); this.renderCalendar(); }
@@ -143,8 +176,16 @@ class EventCalendar {
     document.getElementById('prev-month').onclick  = () => this.previousMonth();
     document.getElementById('next-month').onclick  = () => this.nextMonth();
     document.getElementById('today-btn').onclick   = () => this.goToToday();
+    document.getElementById('jump-btn').onclick    = () => this.jumpToDate();
 
-    // Close button (optional — may be commented out in HTML)
+    // Also jump when pressing Enter on the dropdowns
+    document.getElementById('jump-month').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.jumpToDate();
+    });
+    document.getElementById('jump-year').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.jumpToDate();
+    });
+
     const closeBtn = document.getElementById('modal-close-btn');
     if (closeBtn) closeBtn.onclick = () => this.closeModal();
 
