@@ -57,41 +57,43 @@ $stmt->close();
             <div class="calendar-header">
                 <h2 class="calendar-title" id="calendar-month-year">Loading...</h2>
 
-                <!-- Month / Year Jump -->
-                <div class="calendar-jump">
-                    <select id="jump-month" class="calendar-jump-select">
-                        <option value="0">January</option>
-                        <option value="1">February</option>
-                        <option value="2">March</option>
-                        <option value="3">April</option>
-                        <option value="4">May</option>
-                        <option value="5">June</option>
-                        <option value="6">July</option>
-                        <option value="7">August</option>
-                        <option value="8">September</option>
-                        <option value="9">October</option>
-                        <option value="10">November</option>
-                        <option value="11">December</option>
-                    </select>
-                    <select id="jump-year" class="calendar-jump-select"></select>
-                    <button class="calendar-nav-btn calendar-jump-btn" id="jump-btn">
-                        <i data-lucide="search" size="16"></i> Go
-                    </button>
-                </div>
+                <div class="calendar-controls">
+                    <!-- Month / Year Jump — auto-jumps on change, no button needed -->
+                    <div class="calendar-jump">
+                        <select id="jump-month" class="calendar-jump-select">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                        <select id="jump-year" class="calendar-jump-select"></select>
+                    </div>
 
-                <div class="calendar-navigation">
-                    <button class="calendar-nav-btn" id="prev-month">
-                        <i data-lucide="chevron-left" size="18"></i> Previous
-                    </button>
-                    <button class="calendar-nav-btn calendar-today-btn" id="today-btn">
-                        <i data-lucide="calendar-days" size="18"></i> Today
-                    </button>
-                    <button class="calendar-nav-btn" id="next-month">
-                        Next <i data-lucide="chevron-right" size="18"></i>
-                    </button>
+                    <!-- Navigation -->
+                    <div class="calendar-navigation">
+                        <button class="calendar-nav-btn" id="prev-month">
+                            <i data-lucide="chevron-left" size="18"></i>
+                        </button>
+                        <button class="calendar-nav-btn calendar-today-btn" id="today-btn">
+                            Today
+                        </button>
+                        <button class="calendar-nav-btn" id="next-month">
+                            <i data-lucide="chevron-right" size="18"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+
             <div class="calendar-grid" id="calendar-grid"></div>
+
             <div class="calendar-legend">
                 <div class="legend-item"><div class="legend-color legend-today"></div><span>Today</span></div>
                 <div class="legend-item"><div class="legend-color legend-event"></div><span>Event Day</span></div>

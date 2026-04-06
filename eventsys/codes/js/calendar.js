@@ -173,18 +173,13 @@ class EventCalendar {
   goToToday()     { this.currentDate = new Date(); this.renderCalendar(); }
 
   attachEventListeners() {
-    document.getElementById('prev-month').onclick  = () => this.previousMonth();
-    document.getElementById('next-month').onclick  = () => this.nextMonth();
-    document.getElementById('today-btn').onclick   = () => this.goToToday();
-    document.getElementById('jump-btn').onclick    = () => this.jumpToDate();
+    document.getElementById('prev-month').onclick = () => this.previousMonth();
+    document.getElementById('next-month').onclick = () => this.nextMonth();
+    document.getElementById('today-btn').onclick  = () => this.goToToday();
 
-    // Also jump when pressing Enter on the dropdowns
-    document.getElementById('jump-month').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.jumpToDate();
-    });
-    document.getElementById('jump-year').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.jumpToDate();
-    });
+    // Auto-jump when dropdown changes — no button needed
+    document.getElementById('jump-month').addEventListener('change', () => this.jumpToDate());
+    document.getElementById('jump-year').addEventListener('change',  () => this.jumpToDate());
 
     const closeBtn = document.getElementById('modal-close-btn');
     if (closeBtn) closeBtn.onclick = () => this.closeModal();

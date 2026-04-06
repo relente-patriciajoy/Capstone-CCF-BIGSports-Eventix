@@ -407,7 +407,14 @@
   .calendar-nav-btn    { font-size: 0.75rem; padding: 7px 8px; }
 }
 
-/* ── Month / Year Jump ── */
+/* ── Calendar controls row (jump + navigation) ── */
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .calendar-jump {
   display: flex;
   align-items: center;
@@ -425,7 +432,6 @@
   background: white;
   cursor: pointer;
   transition: border-color 0.2s;
-  appearance: auto;
 }
 
 .calendar-jump-select:focus {
@@ -433,23 +439,28 @@
   border-color: var(--maroon, #800020);
 }
 
-.calendar-jump-btn {
-  padding: 8px 14px;
-  font-size: 0.88rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* Prev / Next — icon only */
+.calendar-navigation .calendar-nav-btn { padding: 8px 12px; }
+.calendar-today-btn { padding: 8px 14px; }
+
+/* Divider between jump and nav */
+.calendar-jump + .calendar-navigation {
+  border-left: 2px solid #e0e0e0;
+  padding-left: 12px;
 }
 
 @media (max-width: 768px) {
-  .calendar-jump {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .calendar-jump-select { flex: 1; min-width: 100px; }
+  .calendar-controls { width: 100%; justify-content: space-between; }
+  .calendar-jump-select { flex: 1; }
+  .calendar-jump + .calendar-navigation { border-left: none; padding-left: 0; }
 }
 
 @media (max-width: 480px) {
-  .calendar-jump-select { font-size: 0.82rem; padding: 7px 10px; }
-  .calendar-jump-btn    { font-size: 0.82rem; padding: 7px 12px; }
+  .calendar-controls { gap: 8px; }
+  .calendar-jump-select { font-size: 0.82rem; padding: 7px 8px; }
+  .calendar-navigation .calendar-nav-btn { padding: 7px 10px; }
+}
+
+@media (max-width: 360px) {
+  .calendar-jump-select { font-size: 0.78rem; padding: 6px 6px; }
 }
