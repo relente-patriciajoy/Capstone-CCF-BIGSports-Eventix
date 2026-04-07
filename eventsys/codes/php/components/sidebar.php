@@ -73,11 +73,6 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
         </a>
         <?php endif; ?>
 
-        <div class="user-info-minimal">
-            <p class="user-name-text"><?= htmlspecialchars($_SESSION['first_name'] ?? 'User') ?> <?= htmlspecialchars($_SESSION['last_name'] ?? '') ?></p>
-            <p class="user-role-text"><?= $role === 'event_head' ? 'Event Head' : 'Participant' ?></p>
-        </div>
-
         <a href="../auth/logout.php?return=<?= urlencode($_SERVER['REQUEST_URI']) ?>">
             <i data-lucide="log-out"></i> Logout
         </a>

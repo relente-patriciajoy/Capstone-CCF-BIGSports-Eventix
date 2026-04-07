@@ -12,7 +12,7 @@
 
 <!-- Sidebar — keeps its own logo + close button, starts at top:0 -->
 <aside class="sidebar" id="adminSidebar">
-    <h2 class="logo">Eventix Admin</h2>
+    <h2 class="logo">Eventix</h2>
 
     <button class="sidebar-close" id="closeSidebarBtn" aria-label="Close menu">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
