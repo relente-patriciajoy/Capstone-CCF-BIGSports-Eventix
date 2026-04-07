@@ -415,10 +415,7 @@ $role_stmt->close();
 
         <header class="banner event-head-banner">
             <div>
-                <div class="event-head-badge">
-                    <i data-lucide="briefcase" style="width:14px;height:14px;"></i>
-                    Event Organizer
-                </div>
+                <div class="event-head-badge"><i data-lucide="briefcase" style="width:14px;height:14px;"></i> Event Organizer</div>
                 <h1>Table Management</h1>
                 <p>Set up and manage seating arrangements for your events.</p>
             </div>
