@@ -206,7 +206,20 @@ $result = $stmt->get_result();
                 <p><strong>Event Time:</strong><br><?= $date_str ?></p>
                 <p><strong>Checked In:</strong> <?= $row['check_in_time'] ? date('M j, Y · g:i A', strtotime($row['check_in_time'])) : 'Not yet' ?></p>
                 <p><strong>Checked Out:</strong> <?= $row['check_out_time'] ? date('M j, Y · g:i A', strtotime($row['check_out_time'])) : 'Not yet' ?></p>
-                <p><strong>Status:</strong> <?= $row['status'] ?? 'absent' ?></p>
+                <?php
+                $status_display = ($row['status'] === 'present') ? 'present' : (!$event_ended ? 'pending' : 'absent');
+                $status_color = match($status_display) {
+                    'present' => 'background:#d1fae5;color:#065f46;',
+                    'pending' => 'background:#fef9c3;color:#854d0e;',
+                    'absent'  => 'background:#fee2e2;color:#991b1b;',
+                    default   => ''
+                };
+                ?>
+                <p><strong>Status:</strong>
+                    <span style="<?= $status_color ?> padding:2px 10px; border-radius:999px; font-size:0.78rem; font-weight:600; display:inline-block; margin-left:4px;">
+                        <?= $status_display ?>
+                    </span>
+                </p>
 
                 <?php if ($missed_checkout): ?>
                     <div class="att-notice att-notice-warning">
