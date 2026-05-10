@@ -1337,3 +1337,19 @@ input:focus-visible, .password-wrapper:focus-within { outline: none; }
     h1[style*="font-size"] { font-size: 1.1rem !important; }
     img[style*="width:56px"] { width: 44px !important; height: 44px !important; }
 }
+
+/* ── Centering fix for pages with no sidebar (verify_admin_otp, volunteer_signup) ── */
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d0010 100%);
+    padding: 24px;
+}
+
+.auth-center-wrap {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
