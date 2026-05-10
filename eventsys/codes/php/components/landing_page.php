@@ -8,7 +8,9 @@ $events_query = "
            COUNT(r.registration_id) AS registered_count,
            (e.capacity - COUNT(r.registration_id)) AS available_seats,
            e.capacity,
-           e.requires_registration
+           e.requires_registration,
+           e.has_volunteer,
+           (SELECT ve.qr_token FROM volunteer_event ve WHERE ve.event_id = e.event_id LIMIT 1) AS vol_token
     FROM event e
     LEFT JOIN venue v ON e.venue_id = v.venue_id
     LEFT JOIN registration r ON e.event_id = r.event_id
@@ -448,6 +450,16 @@ $events_result = $conn->query($events_query);
                         Announcement Only
                     </span>
                     <?php endif; ?>
+
+                    <?php if (!empty($event['has_volunteer']) && !empty($event['vol_token'])): ?>
+                    <button onclick="openVolunteerModal('<?= htmlspecialchars($event['vol_token'], ENT_QUOTES) ?>', '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')"
+                        style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:10px 20px;background:transparent;color:#5b21b6;border:2px solid #5b21b6;border-radius:50px;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;width:100%;justify-content:center;"
+                        onmouseover="this.style.background='#5b21b6';this.style.color='white';"
+                        onmouseout="this.style.background='transparent';this.style.color='#5b21b6';">
+                        <i data-lucide="users" style="width:15px;height:15px;"></i>
+                        Want to Volunteer?
+                    </button>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endwhile; ?>
@@ -666,6 +678,61 @@ function toggleLpDesc(id) {
     full.style.display  = showing ? 'none' : '';
 }
 </script>
+<!-- Volunteer QR Modal -->
+<div id="volunteerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:white;border-radius:20px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#5b21b6,#7c3aed);padding:24px;color:white;">
+            <h3 id="volModalTitle" style="margin:0 0 4px;font-size:1.2rem;"></h3>
+            <p style="margin:0;font-size:0.88rem;opacity:0.9;">Scan the QR code to sign up as a volunteer</p>
+        </div>
+        <div style="padding:28px;">
+            <img id="volModalQR" src="" alt="Volunteer QR Code"
+                 style="width:220px;height:220px;border:4px solid #5b21b6;border-radius:12px;padding:8px;background:white;">
+            <p style="margin:16px 0 4px;font-size:0.82rem;color:#6b6b6b;">Point your camera at the QR code to volunteer</p>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button onclick="closeVolunteerModal()"
+                    style="flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">
+                    Close
+                </button>
+                <a id="volModalDownload" href="#" download
+                    style="flex:1;padding:12px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border-radius:10px;font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Poppins',sans-serif;font-size:0.9rem;">
+                    <i data-lucide="download" style="width:15px;height:15px;"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openVolunteerModal(token, title) {
+    const protocol = window.location.protocol;
+    const host     = window.location.host;
+    const signupUrl = protocol + '//' + host + '/php/auth/volunteer_signup.php?token=' + token;
+    const qrUrl     = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(signupUrl);
+    const dlUrl     = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&download=1&data=' + encodeURIComponent(signupUrl);
+
+    document.getElementById('volModalTitle').textContent = title;
+    document.getElementById('volModalQR').src = qrUrl;
+    document.getElementById('volModalDownload').href = dlUrl;
+
+    const modal = document.getElementById('volunteerModal');
+    modal.style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeVolunteerModal() {
+    document.getElementById('volunteerModal').style.display = 'none';
+}
+
+document.getElementById('volunteerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeVolunteerModal();
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeVolunteerModal();
+});
+</script>
+
 <script>
 // ── Events Carousel ──
 (function() {

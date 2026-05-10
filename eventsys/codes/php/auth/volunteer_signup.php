@@ -121,10 +121,24 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../css/auth.css">
     <link rel="stylesheet" href="../../css/volunteer.css">
-    
+    <style>
+        body.volunteer-signup-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d0010 100%);
+            padding: 24px;
+        }
+        .volunteer-signup-wrap {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+    </style>
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="auth-page volunteer-signup-page" style="background:#f9fafb;min-height:100vh;">
+<body class="auth-page volunteer-signup-page">
 
 <div class="volunteer-signup-wrap">
 

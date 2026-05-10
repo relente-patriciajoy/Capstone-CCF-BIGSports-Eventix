@@ -22,26 +22,6 @@ $role_stmt->bind_param("i", $user_id); $role_stmt->execute();
 $role_stmt->bind_result($role); $role_stmt->fetch(); $role_stmt->close();
 if (empty($role)) $role = 'user';
 
-// ── ADD VOLUNTEER ROLE ──
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_volunteer_role'])) {
-    $event_id   = (int)$_POST['event_id'];
-    $role_name  = trim($_POST['vol_role_name']);
-    $team_lead  = (int)($_POST['vol_team_lead'] ?? 0);
-    if ($role_name) {
-        $s = $conn->prepare("INSERT INTO volunteer_role_type (volunteer_event_id, role_name, team_lead_id) VALUES (?, ?, ?)");
-        $s->bind_param("isi", $event_id, $role_name, $team_lead);
-        $message = $s->execute() ? "Volunteer role added!" : "Failed to add role.";
-        $s->close();
-    }
-}
-
-// ── DELETE VOLUNTEER ROLE ──
-if (isset($_GET['delete_role'])) {
-    $rid = (int)$_GET['delete_role'];
-    $s = $conn->prepare("DELETE FROM volunteer_role_type WHERE role_type_id = ?");
-    $s->bind_param("i", $rid); $s->execute(); $s->close();
-    $message = "Role deleted.";
-}
 
 // ── CREATE EVENT ──
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
@@ -146,7 +126,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
                 $venue_n = $conn->query("SELECT name FROM venue WHERE venue_id = $ev_venue_id")->fetch_assoc()['name'] ?? '';
                 $ins = $conn->prepare("INSERT INTO volunteer_event (event_id, title, description, event_date, location, qr_token, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $ins->bind_param("isssssi", $event_id, $ev_title, $description, $ev_start, $venue_n, $token, $user_id);
-                $ins->execute(); $ins->close();
+                $ins->execute();
+                $new_vol_event_id = $ins->insert_id;
+                $ins->close();
+
+                // Save pending roles if any
+                $pending_roles = json_decode($_POST['pending_roles'] ?? '[]', true);
+                if (!empty($pending_roles) && is_array($pending_roles)) {
+                    foreach ($pending_roles as $pr) {
+                        $role_name = trim($pr['name'] ?? '');
+                        $lead_id   = !empty($pr['lead_id']) ? (int)$pr['lead_id'] : null;
+                        if ($role_name) {
+                            $rs = $conn->prepare("INSERT INTO volunteer_role_type (volunteer_event_id, role_name, team_lead_id) VALUES (?, ?, ?)");
+                            $rs->bind_param("isi", $new_vol_event_id, $role_name, $lead_id);
+                            $rs->execute(); $rs->close();
+                        }
+                    }
+                }
+            }
+
+            // Handle deleted roles
+            $deleted_roles = json_decode($_POST['deleted_roles'] ?? '[]', true);
+            if (!empty($deleted_roles) && is_array($deleted_roles)) {
+                foreach ($deleted_roles as $del_id) {
+                    $del_id = (int)$del_id;
+                    if ($del_id > 0) {
+                        $ds = $conn->prepare("DELETE FROM volunteer_role_type WHERE role_type_id = ?");
+                        $ds->bind_param("i", $del_id); $ds->execute(); $ds->close();
+                    }
+                }
             }
         } else {
             $error = "Failed to update event.";
@@ -379,6 +387,41 @@ $events = $stmt->get_result();
 
                 <hr class="section-divider">
 
+                <!-- ── QUICK ACTIONS ── -->
+                <div class="hub-section">
+                    <h2 class="section-title-with-icon">
+                        <i data-lucide="zap"></i> Quick Actions
+                    </h2>
+                    <div class="quick-actions">
+                        <a href="../qr/scan_qr.php" class="quick-action-card">
+                            <i data-lucide="qr-code"></i>
+                            <span>Scan QR Code</span>
+                        </a>
+                        <a href="view_attendance.php" class="quick-action-card">
+                            <i data-lucide="clipboard-check"></i>
+                            <span>View Attendance</span>
+                        </a>
+                        <a href="announcement.php" class="quick-action-card">
+                            <i data-lucide="megaphone"></i>
+                            <span>Announcements</span>
+                        </a>
+                        <a href="reports.php" class="quick-action-card">
+                            <i data-lucide="bar-chart-2"></i>
+                            <span>Reports</span>
+                        </a>
+                        <a href="participant_engagement.php" class="quick-action-card">
+                            <i data-lucide="activity"></i>
+                            <span>Engagement Analytics</span>
+                        </a>
+                        <a href="inactive_tracking.php" class="quick-action-card">
+                            <i data-lucide="user-x"></i>
+                            <span>Inactive Members</span>
+                        </a>
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
                 <!-- ── CREATE / EDIT EVENT ── -->
                 <?php if (hasPermission($conn, $user_id, 'event.create') || $edit_event): ?>
                 <div class="hub-section">
@@ -542,12 +585,64 @@ $events = $stmt->get_result();
                                 <input type="checkbox" name="has_volunteer" value="1"
                                        id="chk_vol"
                                        <?= ($edit_event && $edit_event['has_volunteer']) ? 'checked' : '' ?>
-                                       onchange="toggleSubFields('vol_fields', this.checked)">
+                                       onchange="toggleSubFields('vol_inline_fields', this.checked)">
                                 <div class="option-toggle-text">
                                     <span class="option-toggle-label">Enable Volunteer Management</span>
-                                    <span class="option-toggle-desc">Allow volunteers to sign up for this event via QR code. You can add roles below.</span>
+                                    <span class="option-toggle-desc">Allow volunteers to sign up for this event via QR code. Add roles below.</span>
                                 </div>
                             </label>
+
+                            <!-- Inline volunteer roles (shown immediately when checkbox checked) -->
+                            <div class="sub-fields <?= ($edit_event && $edit_event['has_volunteer']) ? 'show' : '' ?>" id="vol_inline_fields">
+                                <div class="vol-roles-inline">
+                                    <div class="vol-roles-title" style="margin-bottom:10px;">
+                                        <i data-lucide="users" style="width:15px;height:15px;"></i>
+                                        Volunteer Roles
+                                    </div>
+
+                                    <!-- Roles list (dynamic) -->
+                                    <div id="vol_roles_list">
+                                        <!-- Populated by JS for new events, PHP for edit -->
+                                        <?php if ($edit_event && !empty($vol_roles)): ?>
+                                            <?php foreach ($vol_roles as $vr): ?>
+                                            <div class="vol-role-item" data-id="<?= $vr['role_type_id'] ?>">
+                                                <div>
+                                                    <span class="role-name"><?= htmlspecialchars($vr['role_name']) ?></span>
+                                                    <?php if ($vr['lead_name']): ?>
+                                                        <span class="role-lead"> — Lead: <?= htmlspecialchars($vr['lead_name']) ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <button type="button" class="btn-delete btn-sm"
+                                                    onclick="removeRole(this, <?= $vr['role_type_id'] ?>)">
+                                                    <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                                                </button>
+                                            </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Add new role inline -->
+                                    <div class="add-role-form" style="margin-top:10px;">
+                                        <input type="text" id="new_role_name" placeholder="Role name (e.g. Ushering)">
+                                        <select id="new_role_lead">
+                                            <option value="">-- Team Lead (optional) --</option>
+                                            <?php
+                                            if (isset($all_users)) $all_users->data_seek(0);
+                                            while ($u = $all_users->fetch_assoc()): ?>
+                                                <option value="<?= $u['user_id'] ?>"><?= htmlspecialchars($u['full_name']) ?></option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                        <button type="button" class="btn-primary btn-sm" onclick="addRoleInline()">
+                                            <i data-lucide="plus" style="width:13px;height:13px;"></i> Add
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden JSON field storing pending roles for new event -->
+                                    <input type="hidden" name="pending_roles" id="pending_roles" value="[]">
+                                    <!-- Hidden field for deleted existing roles -->
+                                    <input type="hidden" name="deleted_roles" id="deleted_roles" value="[]">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-actions">
@@ -566,57 +661,7 @@ $events = $stmt->get_result();
                         </div>
                     </form>
 
-                    <!-- ── VOLUNTEER ROLES SECTION (only when editing and has_volunteer) ── -->
-                    <?php if ($edit_event && $edit_event['has_volunteer'] && $volunteer_event_id): ?>
-                    <div class="vol-roles-section" id="vol_fields">
-                        <div class="vol-roles-title">
-                            <i data-lucide="users" style="width:16px;height:16px;"></i>
-                            Volunteer Roles
-                        </div>
 
-                        <?php if (empty($vol_roles)): ?>
-                            <p style="color:#6b6b6b;font-size:0.88rem;margin-bottom:12px;">No roles defined yet. Add roles below.</p>
-                        <?php else: ?>
-                            <?php foreach ($vol_roles as $vr): ?>
-                                <div class="vol-role-item">
-                                    <div>
-                                        <span class="role-name"><?= htmlspecialchars($vr['role_name']) ?></span>
-                                        <?php if ($vr['lead_name']): ?>
-                                            <span class="role-lead"> — Lead: <?= htmlspecialchars($vr['lead_name']) ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <a href="?edit=<?= $edit_event['event_id'] ?>&delete_role=<?= $vr['role_type_id'] ?>"
-                                       class="btn-delete btn-sm"
-                                       onclick="return confirm('Delete this role?')">
-                                        <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-                                    </a>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-
-                        <!-- Add new role -->
-                        <form method="POST" class="add-role-form">
-                            <input type="hidden" name="event_id" value="<?= $volunteer_event_id ?>">
-                            <input type="text" name="vol_role_name" placeholder="Role name (e.g. Ushering)" required>
-                            <select name="vol_team_lead">
-                                <option value="">-- Team Lead (optional) --</option>
-                                <?php while ($u = $all_users->fetch_assoc()): ?>
-                                    <option value="<?= $u['user_id'] ?>"><?= htmlspecialchars($u['full_name']) ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                            <button type="submit" name="add_volunteer_role" class="btn-primary btn-sm">
-                                <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Role
-                            </button>
-                        </form>
-                    </div>
-                    <?php elseif ($edit_event && $edit_event['has_volunteer'] && !$volunteer_event_id): ?>
-                        <div class="vol-roles-section" style="background:#fff3cd;border-color:#ffc107;">
-                            <p style="color:#856404;font-size:0.88rem;">
-                                <i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>
-                                Save the event first to enable volunteer role management.
-                            </p>
-                        </div>
-                    <?php endif; ?>
 
                 </div>
                 <hr class="section-divider">
@@ -748,6 +793,68 @@ $events = $stmt->get_result();
             syncCapacityVisibility();
         }
     }
+
+    // ── Inline volunteer role management ──
+    let pendingRoles = [];
+    let deletedRoles = [];
+
+    function addRoleInline() {
+        const nameInput = document.getElementById('new_role_name');
+        const leadSel   = document.getElementById('new_role_lead');
+        const name      = nameInput.value.trim();
+        const leadId    = leadSel.value;
+        const leadName  = leadSel.options[leadSel.selectedIndex].text;
+
+        if (!name) { nameInput.focus(); return; }
+
+        // Add to pending list
+        pendingRoles.push({ name, lead_id: leadId, lead_name: leadName });
+        document.getElementById('pending_roles').value = JSON.stringify(pendingRoles);
+
+        // Render in UI
+        const list = document.getElementById('vol_roles_list');
+        const idx  = pendingRoles.length - 1;
+        const div  = document.createElement('div');
+        div.className = 'vol-role-item';
+        div.dataset.pending = idx;
+        div.innerHTML = `
+            <div>
+                <span class="role-name">${name}</span>
+                ${leadName && leadId ? ` <span class="role-lead"> — Lead: ${leadName}</span>` : ''}
+            </div>
+            <button type="button" class="btn-delete btn-sm" onclick="removePendingRole(this, ${idx})">
+                <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+            </button>`;
+        list.appendChild(div);
+
+        // Reset inputs
+        nameInput.value = '';
+        leadSel.value   = '';
+        lucide.createIcons();
+    }
+
+    function removePendingRole(btn, idx) {
+        pendingRoles[idx] = null; // nullify instead of splice to keep indices
+        document.getElementById('pending_roles').value = JSON.stringify(pendingRoles.filter(r => r !== null));
+        btn.closest('.vol-role-item').remove();
+    }
+
+    function removeRole(btn, roleId) {
+        // For existing roles on edit page — mark for deletion
+        deletedRoles.push(roleId);
+        document.getElementById('deleted_roles').value = JSON.stringify(deletedRoles);
+        btn.closest('.vol-role-item').remove();
+    }
+
+    // Allow Enter key to add role
+    document.addEventListener('DOMContentLoaded', function() {
+        const nameInput = document.getElementById('new_role_name');
+        if (nameInput) {
+            nameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); addRoleInline(); }
+            });
+        }
+    });
 
     function syncCapacityVisibility() {
         const regChecked   = document.getElementById('chk_reg') && document.getElementById('chk_reg').checked;

@@ -51,6 +51,7 @@ $participants = $parts->get_result();
 // Get volunteer info if enabled
 $vol_event = null;
 $vol_roles = [];
+$vol_members_by_role = [];
 if ($event['has_volunteer']) {
     $ve = $conn->prepare("SELECT * FROM volunteer_event WHERE event_id = ? LIMIT 1");
     $ve->bind_param("i", $event_id); $ve->execute();
@@ -71,6 +72,26 @@ if ($event['has_volunteer']) {
         $vr->execute();
         $vol_roles = $vr->get_result()->fetch_all(MYSQLI_ASSOC);
         $vr->close();
+
+        // Get all volunteer members per role
+        $vm = $conn->prepare("
+            SELECT vm.volunteer_member_id, vm.role_type_id, vm.status, vm.created_at,
+                   u.first_name, u.last_name, u.email, u.phone, u.gender
+            FROM volunteer_member vm
+            JOIN user u ON vm.user_id = u.user_id
+            WHERE vm.role_type_id IN (
+                SELECT role_type_id FROM volunteer_role_type WHERE volunteer_event_id = ?
+            )
+            ORDER BY vm.created_at ASC
+        ");
+        $vm->bind_param("i", $vol_event['volunteer_event_id']);
+        $vm->execute();
+        $all_members = $vm->get_result()->fetch_all(MYSQLI_ASSOC);
+        $vm->close();
+
+        foreach ($all_members as $m) {
+            $vol_members_by_role[$m['role_type_id']][] = $m;
+        }
     }
 }
 
@@ -137,6 +158,29 @@ if ($event['has_tables'] && $event['num_tables']) {
         .qr-url { font-size:0.78rem; color:#6b6b6b; margin-top:10px; word-break:break-all; }
         .empty-tab { text-align:center; padding:40px 20px; color:#6b6b6b; }
         .empty-tab i { width:48px; height:48px; color:#d0d0d0; margin-bottom:12px; }
+        .btn-view-role {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:6px 12px; background:#ede9fe; color:#5b21b6;
+            border:none; border-radius:8px; font-size:0.82rem;
+            font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif;
+            transition:all 0.2s;
+        }
+        .btn-view-role:hover { background:#5b21b6; color:white; }
+        .role-members-table { width:100%; border-collapse:collapse; margin-top:12px; }
+        .role-members-table th { background:#5b21b6; color:white; padding:9px 12px; text-align:left; font-size:0.82rem; }
+        .role-members-table td { padding:9px 12px; border-bottom:1px solid #f0f0f0; font-size:0.83rem; }
+        .role-members-table tr:hover td { background:#faf5ff; }
+        .role-modal {
+            background:white; border-radius:16px;
+            max-width:700px; width:95%; max-height:85vh;
+            overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+        }
+        .role-modal-header {
+            background:linear-gradient(135deg,#5b21b6,#7c3aed);
+            color:white; padding:20px 24px; border-radius:16px 16px 0 0;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .role-modal-body { padding:20px 24px; }
 
         @media (max-width:600px) {
             .view-tabs { flex-wrap:wrap; }
@@ -390,10 +434,16 @@ if ($event['has_tables'] && $event['num_tables']) {
                                                 <?= $vr['member_count'] ?> volunteer<?= $vr['member_count'] != 1 ? 's' : '' ?>
                                             </div>
                                         </div>
-                                        <button class="btn-delete btn-sm"
-                                            onclick="confirmDeleteRole(<?= $vr['role_type_id'] ?>, '<?= htmlspecialchars($vr['role_name'], ENT_QUOTES) ?>')">
-                                            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-                                        </button>
+                                        <div style="display:flex;gap:8px;align-items:center;">
+                                            <button class="btn-view-role btn-sm"
+                                                onclick="openRoleModal(<?= $vr['role_type_id'] ?>, '<?= htmlspecialchars($vr['role_name'], ENT_QUOTES) ?>')">
+                                                <i data-lucide="eye" style="width:14px;height:14px;"></i> View
+                                            </button>
+                                            <button class="btn-delete btn-sm"
+                                                onclick="confirmDeleteRole(<?= $vr['role_type_id'] ?>, '<?= htmlspecialchars($vr['role_name'], ENT_QUOTES) ?>')">
+                                                <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -416,6 +466,22 @@ if ($event['has_tables'] && $event['num_tables']) {
         </div>
     </main>
 
+    <!-- Role Members Modal -->
+    <div id="roleMembersModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;">
+        <div class="role-modal">
+            <div class="role-modal-header">
+                <div>
+                    <h3 id="roleMembersTitle" style="margin:0;font-size:1.1rem;">Role Volunteers</h3>
+                    <p id="roleMembersCount" style="margin:4px 0 0;font-size:0.85rem;opacity:0.85;"></p>
+                </div>
+                <button onclick="closeRoleModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">×</button>
+            </div>
+            <div class="role-modal-body">
+                <div id="roleMembersContent"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete Role Modal -->
     <div class="delete-modal-overlay" id="deleteRoleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
@@ -434,6 +500,61 @@ if ($event['has_tables'] && $event['num_tables']) {
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
     lucide.createIcons();
+
+    // Volunteer members data per role
+    const volMembersByRole = <?php echo json_encode($vol_members_by_role); ?>;
+
+    function openRoleModal(roleId, roleName) {
+        const members = volMembersByRole[roleId] || [];
+        document.getElementById('roleMembersTitle').textContent = roleName + ' — Volunteers';
+        document.getElementById('roleMembersCount').textContent = members.length + ' volunteer' + (members.length !== 1 ? 's' : '');
+
+        let html = '';
+        if (members.length === 0) {
+            html = '<div style="text-align:center;padding:32px;color:#6b6b6b;"><p>No volunteers have signed up for this role yet.</p></div>';
+        } else {
+            html = `<div class="table-wrapper">
+                <table class="role-members-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Email</th>
+                            <th>Contact No.</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            members.forEach((m, i) => {
+                const date = new Date(m.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+                const statusColor = m.status === 'confirmed' ? '#065f46' : '#92400e';
+                const statusBg    = m.status === 'confirmed' ? '#d1fae5' : '#fef3c7';
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><strong>${m.first_name} ${m.last_name}</strong></td>
+                    <td>${m.gender ? m.gender.charAt(0).toUpperCase() + m.gender.slice(1) : 'N/A'}</td>
+                    <td>${m.email}</td>
+                    <td>${m.phone || 'N/A'}</td>
+                    <td><span style="background:${statusBg};color:${statusColor};padding:3px 8px;border-radius:10px;font-size:0.75rem;font-weight:700;">${m.status}</span></td>
+                    <td>${date}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+        }
+
+        document.getElementById('roleMembersContent').innerHTML = html;
+        document.getElementById('roleMembersModalOverlay').style.display = 'flex';
+    }
+
+    function closeRoleModal() {
+        document.getElementById('roleMembersModalOverlay').style.display = 'none';
+    }
+
+    document.getElementById('roleMembersModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeRoleModal();
+    });
 
     function confirmDeleteRole(roleId, roleName) {
         document.getElementById('deleteRoleText').textContent =
