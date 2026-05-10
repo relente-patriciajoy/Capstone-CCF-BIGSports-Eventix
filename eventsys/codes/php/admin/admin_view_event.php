@@ -58,8 +58,6 @@ $registrations = $reg_stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>View Event - Admin Panel</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">
@@ -84,10 +82,10 @@ $registrations = $reg_stmt->get_result();
         <!-- Stats -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
             <?php foreach ([
-                ['Total Registrations', $event['total_registrations'], "Out of {$event['capacity']} capacity"],
+                ['Total Registrations', $event['total_registrations'], $event['capacity'] ? "Out of {$event['capacity']} capacity" : 'Unlimited capacity'],
                 ['Confirmed', $event['confirmed_registrations'], 'Confirmed registrations'],
                 ['Attendance', $event['total_attendance'], 'Checked in'],
-                ['Available Slots', max(0, $event['capacity'] - $event['total_registrations']), 'Remaining capacity'],
+                ['Available Slots', $event['capacity'] ? max(0, $event['capacity'] - $event['total_registrations']) : 'N/A', 'Remaining capacity'],
             ] as [$label, $val, $sub]): ?>
             <div style="background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-left:4px solid #e63946;">
                 <h3 style="font-size:0.85rem;color:#6b6b6b;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;"><?= $label ?></h3>
@@ -105,7 +103,33 @@ $registrations = $reg_stmt->get_result();
                 <div><div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">Category</div><div style="font-size:1.1rem;font-weight:600;margin-top:4px;"><?= htmlspecialchars($event['category_name'] ?? 'Uncategorized') ?></div></div>
                 <div><div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">Start</div><div style="font-size:1.1rem;font-weight:600;margin-top:4px;"><?= date('F j, Y - g:i A', strtotime($event['start_time'])) ?></div></div>
                 <div><div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">End</div><div style="font-size:1.1rem;font-weight:600;margin-top:4px;"><?= date('F j, Y - g:i A', strtotime($event['end_time'])) ?></div></div>
-                <div><div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">Capacity</div><div style="font-size:1.1rem;font-weight:600;margin-top:4px;"><?= $event['capacity'] ?> people</div></div>
+                <div>
+    <div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">Capacity</div>
+    <div style="font-size:1.1rem;font-weight:600;margin-top:4px;">
+        <?= $event['capacity'] ? $event['capacity'] . ' people' : 'Unlimited' ?>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;">
+        <?php if (!($event['requires_registration'] ?? 1)): ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#f0fdf4;color:#166534;border-radius:10px;font-weight:600;">Announcement Only</span>
+        <?php else: ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#dbeafe;color:#1e40af;border-radius:10px;font-weight:600;">Registration Required</span>
+        <?php endif; ?>
+        <?php if (!($event['show_on_landing'] ?? 1)): ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#fef3c7;color:#92400e;border-radius:10px;font-weight:600;">Hidden from Landing</span>
+        <?php else: ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#d1fae5;color:#065f46;border-radius:10px;font-weight:600;">Public</span>
+        <?php endif; ?>
+        <?php if (!empty($event['has_volunteer'])): ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#ede9fe;color:#5b21b6;border-radius:10px;font-weight:600;">Volunteers Enabled</span>
+        <?php endif; ?>
+        <?php if (!empty($event['has_tables'])): ?>
+            <span style="font-size:0.72rem;padding:3px 8px;background:#fee2e2;color:#991b1b;border-radius:10px;font-weight:600;">
+                Tables: <?= $event['num_tables'] ?? 'N/A' ?>
+                <?php if (!empty($event['seats_per_table'])): ?>(<?= $event['seats_per_table'] ?>/table)<?php endif; ?>
+            </span>
+        <?php endif; ?>
+    </div>
+</div>
             </div>
             <div style="margin-top:20px;"><div style="font-size:0.85rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;">Description</div><p style="margin-top:8px;line-height:1.6;"><?= nl2br(htmlspecialchars($event['description'])) ?></p></div>
         </div>

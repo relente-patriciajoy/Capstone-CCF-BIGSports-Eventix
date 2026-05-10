@@ -16,15 +16,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
     $maxCapacity = $_POST['capacity'] ?? 0;
 
     // ── Block registration if event has already ended ──
-    $event_check = $conn->prepare("SELECT end_time, has_tables FROM event WHERE event_id = ?");
+    $event_check = $conn->prepare("SELECT end_time, has_tables, requires_registration FROM event WHERE event_id = ?");
     $event_check->bind_param("i", $event_id);
     $event_check->execute();
-    $event_check->bind_result($end_time, $has_tables);
+    $event_check->bind_result($end_time, $has_tables, $requires_registration);
     $event_check->fetch();
     $event_check->close();
 
     if (!$end_time) {
         $_SESSION['register_status'] = "Event not found.";
+        header("Location: ../dashboard/events.php");
+        exit();
+    }
+
+    // ── Block registration if event is announcement only ──
+    if (!$requires_registration) {
+        $_SESSION['register_status'] = "This event does not require registration.";
         header("Location: ../dashboard/events.php");
         exit();
     }
@@ -48,14 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
     }
 
     // ── Determine table number ──
-    // If event uses table management → auto-assign via smart fill logic
-    // If event does NOT use table management → use original random assignment
     if ($has_tables) {
-        // Smart auto-assign: fills tables completely before opening next
-        // Gender separation handled automatically inside autoAssignTable()
-        $assignedTable = 0; // will be set after INSERT via autoAssignTable()
+        $assignedTable = 0;
     } else {
-        // Original random assignment logic for events without table management
         $assignedTable = assignTableNumberRandom($conn, $event_id, $maxCapacity);
         if ($assignedTable === null) {
             echo "<script>alert('No available tables for this event. Please try again later.'); window.location.href='../dashboard/events.php';</script>";
@@ -74,10 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
         // ── If event uses table management, now assign proper table ──
         if ($has_tables) {
             $assignedTable = autoAssignTable($conn, $event_id, $user_id, $registration_id);
-            if ($assignedTable === null) {
-                // All tables full — still registered but no table yet
-                // Event Head can manually assign later via table_management.php
-            }
         }
 
         // ── Generate QR Code ──
@@ -101,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
     header("Location: ../dashboard/events.php");
 }
 
-// ── Original random table assignment (kept for non-table-management events) ──
+// ── Original random table assignment ──
 function assignTableNumberRandom($conn, $event_id, $maxCapacity) {
     $maxAttempts = $maxCapacity;
     $attempts    = 0;

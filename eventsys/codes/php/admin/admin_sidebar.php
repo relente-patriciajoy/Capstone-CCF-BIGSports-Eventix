@@ -53,9 +53,7 @@
         <a href="/Registration-System/eventsys/codes/php/admin/admin_recovery_requests.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_recovery_requests.php' ? 'active' : '' ?>">
             <i data-lucide="life-buoy"></i> Recovery Requests
         </a>
-        <a href="/Registration-System/eventsys/codes/php/admin/volunteer/index.php" class="<?= strpos($_SERVER['REQUEST_URI'], '/volunteer/') !== false ? 'active' : '' ?>">
-            <i data-lucide="users"></i> Volunteer Management
-        </a>
+
         <a href="/Registration-System/eventsys/codes/php/admin/backup_restore.php">
             <i data-lucide="database"></i> Backup &amp; Restore
         </a>

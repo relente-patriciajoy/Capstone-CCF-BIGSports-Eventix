@@ -14,6 +14,7 @@ $_SESSION['volunteer_seen_at'] = time() + 1;
 // Fetch all volunteer events the user has joined
 $stmt = $conn->prepare("
     SELECT ve.volunteer_event_id, ve.title, ve.description, ve.event_date, ve.location,
+           e.title AS main_event_title, e.start_time AS main_event_start, e.requires_registration,
            vrt.role_name,
            CONCAT(u.first_name,' ',u.last_name) AS lead_name,
            u.email AS lead_email, u.phone AS lead_phone,
@@ -21,6 +22,7 @@ $stmt = $conn->prepare("
     FROM volunteer_member vm
     JOIN volunteer_role_type vrt ON vm.role_type_id = vrt.role_type_id
     JOIN volunteer_event ve ON vrt.volunteer_event_id = ve.volunteer_event_id
+    LEFT JOIN event e ON ve.event_id = e.event_id
     LEFT JOIN user u ON vrt.team_lead_id = u.user_id
     WHERE vm.user_id = ?
     ORDER BY ve.event_date DESC
@@ -39,8 +41,6 @@ $role_icons  = ['ushering' => 'door-open', 'admin' => 'clipboard-list', 'technic
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>My Volunteer Events — Eventix</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">

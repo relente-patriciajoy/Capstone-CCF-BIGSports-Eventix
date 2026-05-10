@@ -30,6 +30,7 @@ $search_param = "%$search%";
 if (!empty($search)) {
     $stmt = $conn->prepare("
         SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity,
+               e.requires_registration, e.show_on_landing, e.has_volunteer, e.has_tables,
                v.name AS venue, o.name AS organizer,
                COUNT(r.registration_id) AS registrations
         FROM event e
@@ -44,6 +45,7 @@ if (!empty($search)) {
 } else {
     $stmt = $conn->prepare("
         SELECT e.event_id, e.title, e.start_time, e.end_time, e.capacity,
+               e.requires_registration, e.show_on_landing, e.has_volunteer, e.has_tables,
                v.name AS venue, o.name AS organizer,
                COUNT(r.registration_id) AS registrations
         FROM event e
@@ -63,8 +65,6 @@ $events = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>All Events - Admin Panel</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">
@@ -126,7 +126,22 @@ $events = $stmt->get_result();
                                 <td><?= date('M j, Y', strtotime($event['start_time'])) ?></td>
                                 <td>
                                     <span class="badge badge-info">
-                                        <?= $event['registrations'] ?> / <?= $event['capacity'] ?>
+                                        <?= $event['registrations'] ?>
+                                        <?php if ($event['capacity']): ?> / <?= $event['capacity'] ?><?php else: ?> / <em>unlimited</em><?php endif; ?>
+                                        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                                            <?php if (!$event['requires_registration']): ?>
+                                                <span style="font-size:0.7rem;padding:2px 6px;background:#f0fdf4;color:#166534;border-radius:10px;font-weight:600;">Announcement</span>
+                                            <?php endif; ?>
+                                            <?php if (!$event['show_on_landing']): ?>
+                                                <span style="font-size:0.7rem;padding:2px 6px;background:#fef3c7;color:#92400e;border-radius:10px;font-weight:600;">Hidden</span>
+                                            <?php endif; ?>
+                                            <?php if ($event['has_volunteer']): ?>
+                                                <span style="font-size:0.7rem;padding:2px 6px;background:#ede9fe;color:#5b21b6;border-radius:10px;font-weight:600;">Volunteers</span>
+                                            <?php endif; ?>
+                                            <?php if ($event['has_tables']): ?>
+                                                <span style="font-size:0.7rem;padding:2px 6px;background:#fee2e2;color:#991b1b;border-radius:10px;font-weight:600;">Tables</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </span>
                                 </td>
                                 <td class="actions">

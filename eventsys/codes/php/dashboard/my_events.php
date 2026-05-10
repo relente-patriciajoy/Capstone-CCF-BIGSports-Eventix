@@ -20,7 +20,7 @@ $stmt->close();
 $query = "
 SELECT r.registration_id, e.title, e.start_time, e.end_time,
        v.name AS venue, r.registration_date, r.table_number, r.status,
-       e.has_tables
+       e.has_tables, e.requires_registration, e.has_volunteer
 FROM registration r
 JOIN event e ON r.event_id = e.event_id
 JOIN venue v ON e.venue_id = v.venue_id
@@ -37,8 +37,6 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>My Registered Events - Eventix</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">
@@ -129,6 +127,12 @@ $result = $stmt->get_result();
                 <p><strong>Date:</strong> <?= $date_str ?></p>
                 <?php if ($row['has_tables'] && $row['table_number'] > 0): ?>
                 <p><strong>Table Number:</strong> <?= $row['table_number'] ?></p>
+                <?php endif; ?>
+                <?php if ($row['has_volunteer']): ?>
+                <p style="font-size:0.82rem;color:#5b21b6;font-weight:600;">
+                    <i data-lucide="users" style="width:13px;height:13px;vertical-align:middle;"></i>
+                    Volunteers accepted for this event
+                </p>
                 <?php endif; ?>
                 <p>
                     <strong>Status:</strong>

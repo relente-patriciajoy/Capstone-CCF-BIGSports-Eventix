@@ -25,8 +25,12 @@ $query = "SELECT
             e.start_time,
             e.end_time,
             e.capacity,
+            e.requires_registration,
+            e.has_volunteer,
             v.name AS venue,
-            (e.capacity - COUNT(r.registration_id)) AS available_seats
+            CASE WHEN e.capacity IS NULL THEN NULL
+                 ELSE (e.capacity - COUNT(r.registration_id))
+            END AS available_seats
         FROM event e
         JOIN venue v ON e.venue_id = v.venue_id
         LEFT JOIN registration r ON e.event_id = r.event_id
@@ -40,8 +44,6 @@ $result = $conn->query($query);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-  <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
   <title>Browse Events - Eventix</title>
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="../../css/sidebar.css">
@@ -153,7 +155,12 @@ $result = $conn->query($query);
 
             <h3><?= htmlspecialchars($row['title']) ?></h3>
 
-            <?php if ($event_ended): ?>
+            <?php if (!$row['requires_registration']): ?>
+                <span class="event-closed-badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">
+                    <i data-lucide="megaphone" style="width:12px;height:12px;"></i>
+                    Announcement Only
+                </span>
+            <?php elseif ($event_ended): ?>
                 <span class="event-closed-badge">
                     <i data-lucide="lock" style="width:12px;height:12px;"></i>
                     Registration Closed
@@ -174,7 +181,11 @@ $result = $conn->query($query);
             }
             ?>
             <p><strong>Date:</strong> <?= $date_str ?></p>
-            <p><strong>Available:</strong> <?= htmlspecialchars($row['available_seats']) ?> seats</p>
+            <?php if ($row['requires_registration']): ?>
+                <?php if ($row['capacity']): ?>
+                    <p><strong>Available:</strong> <?= max(0, (int)$row['available_seats']) ?> / <?= $row['capacity'] ?> seats</p>
+                <?php endif; ?>
+            <?php endif; ?>
             <?php
             $desc    = htmlspecialchars($row['description'] ?? '');
             $limit   = 80;
@@ -192,7 +203,13 @@ $result = $conn->query($query);
             </p>
             <?php endif; ?>
 
-            <?php if ($event_ended): ?>
+            <?php if (!$row['requires_registration']): ?>
+                <!-- Announcement only — no register button -->
+                <div style="margin-top:12px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:0.85rem;color:#166534;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="info" style="width:15px;height:15px;flex-shrink:0;"></i>
+                    This event is for announcement only. No registration required.
+                </div>
+            <?php elseif ($event_ended): ?>
                 <button class="btn-register-closed" disabled title="This event has already ended">
                     <i data-lucide="lock" style="width:15px;height:15px;"></i>
                     Registration Closed
@@ -201,7 +218,7 @@ $result = $conn->query($query);
                 <form method="POST" action="../event/event_register.php">
                     <input type="hidden" name="capacity" value="<?= $row['capacity'] ?>">
                     <input type="hidden" name="event_id" value="<?= $row['event_id'] ?>">
-                    <button type="submit">Register</button>
+                    <button type="submit">Register Now</button>
                 </form>
             <?php endif; ?>
         </div>

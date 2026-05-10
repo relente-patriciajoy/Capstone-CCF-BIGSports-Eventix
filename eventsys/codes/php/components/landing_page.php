@@ -5,12 +5,15 @@ include('../../includes/db.php');
 $events_query = "
     SELECT e.event_id, e.title, e.description, e.start_time, e.end_time,
            v.name AS venue_name, v.city,
+           COUNT(r.registration_id) AS registered_count,
            (e.capacity - COUNT(r.registration_id)) AS available_seats,
-           e.capacity
+           e.capacity,
+           e.requires_registration
     FROM event e
     LEFT JOIN venue v ON e.venue_id = v.venue_id
     LEFT JOIN registration r ON e.event_id = r.event_id
     WHERE e.start_time >= NOW()
+    AND e.show_on_landing = 1
     GROUP BY e.event_id
     ORDER BY e.start_time ASC
     LIMIT 6
@@ -36,6 +39,72 @@ $events_result = $conn->query($events_query);
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="../../css/landing_page.css">
+    <style>
+    /* ── Carousel overrides ── */
+    .events-carousel-wrapper { position: relative; width: 100%; overflow: hidden; }
+    .events-carousel { overflow: hidden; width: 100%; }
+
+    /* Override landing_page.css grid with flex */
+    #eventsGrid.events-grid {
+        display: flex !important;
+        grid-template-columns: none !important;
+        flex-wrap: nowrap !important;
+        max-width: none !important;
+        margin: 0 !important;
+        gap: 24px !important;
+        transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+        will-change: transform;
+        align-items: stretch;
+    }
+
+    /* Consistent card width — exactly 1/3 of container minus gaps */
+    #eventsGrid.events-grid > .event-card {
+        min-width: calc((100% - 48px) / 3) !important;
+        max-width: calc((100% - 48px) / 3) !important;
+        width: calc((100% - 48px) / 3) !important;
+        flex: 0 0 calc((100% - 48px) / 3) !important;
+        box-sizing: border-box;
+        margin: 0 !important;
+    }
+
+    .carousel-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    .carousel-btn {
+        width: 40px; height: 40px;
+        background: #800020;
+        border: none; border-radius: 50%;
+        color: white; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(128,0,32,0.3);
+        flex-shrink: 0;
+    }
+    .carousel-btn svg { width: 18px; height: 18px; }
+    .carousel-btn:hover { background: #5a0016; transform: scale(1.05); }
+    .carousel-btn:disabled { background: #d0d0d0; cursor: not-allowed; transform: none; box-shadow: none; }
+    .carousel-indicator { font-size: 0.88rem; color: #6b6b6b; font-weight: 600; min-width: 48px; text-align: center; }
+
+    @media (max-width: 768px) {
+        #eventsGrid.events-grid > .event-card {
+            min-width: 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+        #eventsGrid.events-grid > .event-card {
+            min-width: calc((100% - 24px) / 2) !important;
+            max-width: calc((100% - 24px) / 2) !important;
+            width: calc((100% - 24px) / 2) !important;
+            flex: 0 0 calc((100% - 24px) / 2) !important;
+        }
+    }
+    </style>
 </head>
 <body>
 
@@ -306,13 +375,22 @@ $events_result = $conn->query($events_query);
         <p class="section-subtitle">Register now and be part of what God is doing in our community</p>
     </div>
 
-    <div class="events-grid">
+    <div class="events-carousel-wrapper">
+        <!-- Carousel controls -->
+        <div class="carousel-controls">
+            <button class="carousel-btn" id="carouselPrev"><i data-lucide="chevron-left"></i></button>
+            <span class="carousel-indicator" id="carouselIndicator"></span>
+            <button class="carousel-btn" id="carouselNext"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div class="events-carousel" id="eventsCarousel">
+        <div class="events-grid" id="eventsGrid">
         <?php if ($events_result && $events_result->num_rows > 0): ?>
             <?php while ($event = $events_result->fetch_assoc()):
+                $registered  = (int)$event['registered_count'];
                 $available   = max(0, (int)$event['available_seats']);
                 $capacity    = (int)$event['capacity'];
                 $pct         = $capacity > 0 ? ($available / $capacity) * 100 : 100;
-                $isLow       = $pct < 30;
+                $isLow       = $capacity > 0 && $pct < 30;
                 $desc_full  = htmlspecialchars($event['description'] ?? '');
                 $desc_limit = 100;
                 $desc_long  = mb_strlen($desc_full) > $desc_limit;
@@ -350,20 +428,31 @@ $events_result = $conn->query($events_query);
                     <?php endif; ?>
 
                     <div class="event-badges">
-                        <span class="event-badge <?= $isLow ? 'event-badge-low' : '' ?>">
-                            <i data-lucide="users" class="icon-sm"></i>
-                            <?= $available ?> / <?= $capacity ?> slots
-                        </span>
-
+                        <?php if ($event['requires_registration'] && $capacity > 0): ?>
+                            <span class="event-badge <?= $isLow ? 'event-badge-low' : '' ?>">
+                                <i data-lucide="users" class="icon-sm"></i>
+                                <?= $registered ?> / <?= $capacity ?> registered
+                                <?php if ($isLow): ?>· <strong><?= $available ?> slots left</strong><?php endif; ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
 
+                    <?php if ($event['requires_registration']): ?>
                     <a href="../auth/index.php" class="event-register-btn">
                         Register Now
                         <i data-lucide="arrow-right" class="icon-md"></i>
                     </a>
+                    <?php else: ?>
+                    <span style="display:inline-block;padding:10px 20px;background:#f0fdf4;color:#166534;border-radius:8px;font-size:0.85rem;font-weight:600;">
+                        <i data-lucide="megaphone" style="width:14px;height:14px;vertical-align:middle;"></i>
+                        Announcement Only
+                    </span>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endwhile; ?>
+        </div><!-- end events-grid -->
+        </div><!-- end events-carousel -->
 
         <?php else: ?>
             <div class="no-events">
@@ -576,6 +665,47 @@ function toggleLpDesc(id) {
     short.style.display = showing ? '' : 'none';
     full.style.display  = showing ? 'none' : '';
 }
+</script>
+<script>
+// ── Events Carousel ──
+(function() {
+    const grid      = document.getElementById('eventsGrid');
+    const prevBtn   = document.getElementById('carouselPrev');
+    const nextBtn   = document.getElementById('carouselNext');
+    const indicator = document.getElementById('carouselIndicator');
+
+    if (!grid) return;
+
+    const cards = grid.querySelectorAll('.event-card');
+    if (cards.length === 0) return;
+
+    let current = 0;
+
+    function perPage() {
+        if (window.innerWidth <= 768) return 1;
+        if (window.innerWidth <= 1024) return 2;
+        return 3;
+    }
+
+    function total() { return Math.ceil(cards.length / perPage()); }
+
+    function update() {
+        const pp    = perPage();
+        const gap   = 24;
+        const cardW = cards[0].offsetWidth + gap;
+        grid.style.transform = `translateX(-${current * cardW * pp}px)`;
+        indicator.textContent = (cards.length > 0) ? `${current + 1} / ${total()}` : '';
+        if (prevBtn) prevBtn.disabled = current === 0;
+        if (nextBtn) nextBtn.disabled = current >= total() - 1;
+        lucide.createIcons();
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', () => { if (current > 0) { current--; update(); } });
+    if (nextBtn) nextBtn.addEventListener('click', () => { if (current < total() - 1) { current++; update(); } });
+
+    window.addEventListener('resize', () => { current = 0; update(); });
+    update();
+})();
 </script>
 </body>
 </html>

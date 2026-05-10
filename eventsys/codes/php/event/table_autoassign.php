@@ -1,21 +1,26 @@
 <?php
 /**
  * Table auto-assignment function
- * Include this in event_register.php
+ * Updated: uses num_tables and seats_per_table from event table directly
+ * No longer depends on separate event_table records
  * Call: autoAssignTable($conn, $event_id, $user_id, $registration_id)
  */
 
 function autoAssignTable($conn, $event_id, $user_id, $registration_id) {
-    // Check if event uses table management
-    $ev = $conn->prepare("SELECT has_tables, gender_separated FROM event WHERE event_id = ?");
+    // Get event table settings
+    $ev = $conn->prepare("SELECT has_tables, gender_separated, num_tables, seats_per_table FROM event WHERE event_id = ?");
     $ev->bind_param("i", $event_id);
     $ev->execute();
     $event = $ev->get_result()->fetch_assoc();
     $ev->close();
 
-    if (!$event || !$event['has_tables']) {
-        return null; // No table management for this event
+    if (!$event || !$event['has_tables'] || !$event['num_tables']) {
+        return null; // No table management or no tables configured
     }
+
+    $num_tables      = (int)$event['num_tables'];
+    $seats_per_table = $event['seats_per_table'] ? (int)$event['seats_per_table'] : null; // null = no limit
+    $gender_separated = $event['gender_separated'];
 
     // Get user gender
     $ug = $conn->prepare("SELECT gender FROM user WHERE user_id = ?");
@@ -25,55 +30,75 @@ function autoAssignTable($conn, $event_id, $user_id, $registration_id) {
     $ug->close();
 
     $gender = $user['gender'] ?? null;
-    // If gender is unknown and event is gender-separated, assign to mixed or first available
-    if (!$gender) $gender = 'mixed';
 
-    // Find the first table with available space that matches gender
-    // Rule: fill table completely before moving to next (no empty seats)
-    if ($event['gender_separated']) {
-        // Gender-separated: find tables matching user's gender that aren't full yet
-        // Prioritize the table with the most occupants (fill before opening next)
-        $tq = $conn->prepare("
-            SELECT et.table_number, et.capacity,
-                   COUNT(r.registration_id) AS occupants
-            FROM event_table et
-            LEFT JOIN registration r ON r.event_id = ? AND r.table_number = et.table_number
-            WHERE et.event_id = ? AND et.gender_assignment = ?
-            GROUP BY et.table_id
-            HAVING occupants < et.capacity
-            ORDER BY occupants DESC, et.table_number ASC
-            LIMIT 1
-        ");
-        $tq->bind_param("iis", $event_id, $event_id, $gender);
-    } else {
-        // Mixed: fill any table with space, most occupied first
-        $tq = $conn->prepare("
-            SELECT et.table_number, et.capacity,
-                   COUNT(r.registration_id) AS occupants
-            FROM event_table et
-            LEFT JOIN registration r ON r.event_id = ? AND r.table_number = et.table_number
-            WHERE et.event_id = ?
-            GROUP BY et.table_id
-            HAVING occupants < et.capacity
-            ORDER BY occupants DESC, et.table_number ASC
-            LIMIT 1
-        ");
-        $tq->bind_param("ii", $event_id, $event_id);
+    // Determine table range based on gender separation
+    // If gender separated: first half = male, second half = female
+    $start_table = 1;
+    $end_table   = $num_tables;
+
+    if ($gender_separated && $gender) {
+        $half = (int)ceil($num_tables / 2);
+        if ($gender === 'male') {
+            $start_table = 1;
+            $end_table   = $half;
+        } else {
+            $start_table = $half + 1;
+            $end_table   = $num_tables;
+        }
     }
 
-    $tq->execute();
-    $table = $tq->get_result()->fetch_assoc();
-    $tq->close();
+    // Find table with most occupants that still has space (fill-first algorithm)
+    // Loop through table numbers in range
+    $best_table    = null;
+    $best_occupants = -1;
 
-    if (!$table) {
-        return null; // All tables full
+    for ($t = $start_table; $t <= $end_table; $t++) {
+        // Count occupants in this table
+        $cq = $conn->prepare("SELECT COUNT(*) as cnt FROM registration WHERE event_id = ? AND table_number = ?");
+        $cq->bind_param("ii", $event_id, $t);
+        $cq->execute();
+        $cnt_row = $cq->get_result()->fetch_assoc();
+        $cq->close();
+        $occupants = (int)($cnt_row['cnt'] ?? 0);
+
+        // Check if table has space
+        $has_space = $seats_per_table === null || $occupants < $seats_per_table;
+
+        if ($has_space && $occupants > $best_occupants) {
+            $best_table     = $t;
+            $best_occupants = $occupants;
+        }
+    }
+
+    if ($best_table === null) {
+        // All tables full — try any table if gender separated and no space in gender tables
+        if ($gender_separated) {
+            for ($t = 1; $t <= $num_tables; $t++) {
+                $cq = $conn->prepare("SELECT COUNT(*) as cnt FROM registration WHERE event_id = ? AND table_number = ?");
+                $cq->bind_param("ii", $event_id, $t);
+                $cq->execute();
+                $cnt_row = $cq->get_result()->fetch_assoc();
+                $cq->close();
+                $occupants = (int)($cnt_row['cnt'] ?? 0);
+                $has_space = $seats_per_table === null || $occupants < $seats_per_table;
+                if ($has_space && $occupants > $best_occupants) {
+                    $best_table     = $t;
+                    $best_occupants = $occupants;
+                }
+            }
+        }
+    }
+
+    if ($best_table === null) {
+        return null; // All tables truly full
     }
 
     // Assign the table
     $upd = $conn->prepare("UPDATE registration SET table_number = ? WHERE registration_id = ?");
-    $upd->bind_param("ii", $table['table_number'], $registration_id);
+    $upd->bind_param("ii", $best_table, $registration_id);
     $upd->execute();
     $upd->close();
 
-    return $table['table_number'];
+    return $best_table;
 }
+?>

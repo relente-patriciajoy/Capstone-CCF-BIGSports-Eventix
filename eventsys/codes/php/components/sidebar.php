@@ -68,10 +68,13 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
         ]) ? 'active' : '' ?>">
             <i data-lucide="layout-dashboard"></i> Event Management
         </a>
-        <a href="../event/table_management.php" class="<?= $current_page === 'table_management.php' ? 'active' : '' ?>">
-            <i data-lucide="armchair"></i> Table Management
-        </a>
+
         <?php endif; ?>
+
+        <div class="user-info-minimal">
+            <p class="user-name-text"><?= htmlspecialchars($_SESSION['first_name'] ?? 'User') ?> <?= htmlspecialchars($_SESSION['last_name'] ?? '') ?></p>
+            <p class="user-role-text"><?= $role === 'event_head' ? 'Event Head' : 'Participant' ?></p>
+        </div>
 
         <a href="../auth/logout.php?return=<?= urlencode($_SERVER['REQUEST_URI']) ?>">
             <i data-lucide="log-out"></i> Logout

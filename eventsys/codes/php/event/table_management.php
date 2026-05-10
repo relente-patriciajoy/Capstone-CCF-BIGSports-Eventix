@@ -2,6 +2,11 @@
 require_once('../../includes/session.php');
 require_once('../../includes/role_protection.php');
 requireRole('event_head');
+
+// Table Management is now integrated into Event Management
+header("Location: manage_events.php?info=table_integrated");
+exit();
+
 include('../../includes/db.php');
 
 $user_id   = $_SESSION['user_id'];
@@ -217,8 +222,6 @@ if (isset($_GET['success'])) $message = "Changes saved successfully!";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>Table Management — Eventix</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/sidebar.css">
@@ -415,7 +418,10 @@ $role_stmt->close();
 
         <header class="banner event-head-banner">
             <div>
-                <div class="event-head-badge"><i data-lucide="briefcase" style="width:14px;height:14px;"></i> Event Organizer</div>
+                <div class="event-head-badge">
+                    <i data-lucide="briefcase" style="width:14px;height:14px;"></i>
+                    Event Organizer
+                </div>
                 <h1>Table Management</h1>
                 <p>Set up and manage seating arrangements for your events.</p>
             </div>

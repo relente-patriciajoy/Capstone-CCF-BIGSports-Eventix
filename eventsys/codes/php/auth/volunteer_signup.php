@@ -11,9 +11,17 @@ $message = '';
 $error   = '';
 $joined  = false;
 
-// Find the event by token
-$ev = $conn->prepare("SELECT * FROM volunteer_event WHERE qr_token = ?");
-$ev->bind_param("s", $token);
+// Find the event by token OR event_id
+if (!empty($_GET['event_id'])) {
+    // New format: linked to main event
+    $event_id_param = (int)$_GET['event_id'];
+    $ev = $conn->prepare("SELECT ve.*, e.title as main_title FROM volunteer_event ve JOIN event e ON ve.event_id = e.event_id WHERE ve.event_id = ?");
+    $ev->bind_param("i", $event_id_param);
+} else {
+    // Legacy format: standalone token
+    $ev = $conn->prepare("SELECT * FROM volunteer_event WHERE qr_token = ?");
+    $ev->bind_param("s", $token);
+}
 $ev->execute();
 $event = $ev->get_result()->fetch_assoc();
 $ev->close();
@@ -27,7 +35,10 @@ if (!$event) {
 
 // If not logged in, save token to session and redirect to login
 if (!isset($_SESSION['user_id'])) {
-    $_SESSION['volunteer_redirect'] = '../auth/volunteer_signup.php?token=' . $token;
+    $redir = !empty($_GET['event_id'])
+        ? '../auth/volunteer_signup.php?event_id=' . (int)$_GET['event_id']
+        : '../auth/volunteer_signup.php?token=' . $token;
+    $_SESSION['volunteer_redirect'] = $redir;
     header("Location: ../auth/index.php?volunteer=1");
     exit();
 }
@@ -105,8 +116,6 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../../assets/fav-logo.png">
-    <link rel="apple-touch-icon" href="../../assets/fav-logo.png">
     <title>Volunteer Sign Up — <?= htmlspecialchars($event['title']) ?></title>
     <link rel="icon" type="image/png" href="../../assets/eventix-logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
