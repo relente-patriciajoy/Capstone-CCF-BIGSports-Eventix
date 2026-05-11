@@ -338,6 +338,20 @@ $is_event_head = ($user_role === 'event_head');
         setTimeout(() => { if (isScanning) html5QrCode.resume(); }, 2000);
     }
 
+    function formatServerTime(dateString) {
+        // Parse server-side timestamp and format it with correct timezone
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric', 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            second: '2-digit', 
+            hour12: true 
+        });
+    }
+
     function displayResult(data, type) {
         const emptyState = document.getElementById('emptyState');
         if (emptyState) emptyState.style.display = 'none';
@@ -347,6 +361,9 @@ $is_event_head = ($user_role === 'event_head');
         const card      = document.createElement('div');
         card.className  = 'result-card result-' + type;
 
+        // Use server timestamp from response (process_qr.php NOW() timestamp)
+        const resultTime = data.server_time ? formatServerTime(data.server_time) : new Date().toLocaleTimeString();
+
         let html = `
             <div class="result-header">
                 <div class="result-icon">
@@ -354,7 +371,7 @@ $is_event_head = ($user_role === 'event_head');
                 </div>
                 <div>
                     <p class="result-title">${data.message}</p>
-                    <p class="result-time">${new Date().toLocaleTimeString()}</p>
+                    <p class="result-time">${resultTime}</p>
                 </div>
             </div>`;
 
@@ -365,8 +382,8 @@ $is_event_head = ($user_role === 'event_head');
                 <div class="info-item"><div class="info-label">Attendee</div><div class="info-value">${name}</div></div>
                 <div class="info-item"><div class="info-label">Email</div><div class="info-value">${r.email}</div></div>
                 <div class="info-item"><div class="info-label">Event</div><div class="info-value">${r.event_title}</div></div>`;
-            if (data.check_in_time)  html += `<div class="info-item"><div class="info-label">Checked in</div><div class="info-value">${new Date(data.check_in_time).toLocaleTimeString()}</div></div>`;
-            if (data.check_out_time) html += `<div class="info-item"><div class="info-label">Checked out</div><div class="info-value">${new Date(data.check_out_time).toLocaleTimeString()}</div></div>`;
+            if (data.check_in_time)  html += `<div class="info-item"><div class="info-label">Checked in</div><div class="info-value">${formatServerTime(data.check_in_time)}</div></div>`;
+            if (data.check_out_time) html += `<div class="info-item"><div class="info-label">Checked out</div><div class="info-value">${formatServerTime(data.check_out_time)}</div></div>`;
             html += `</div>`;
         }
 

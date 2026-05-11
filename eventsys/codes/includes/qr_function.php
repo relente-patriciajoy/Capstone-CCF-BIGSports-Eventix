@@ -190,9 +190,9 @@ function processCheckIn($qr_data, $conn) {
     if ($stmt->execute()) {
         $stmt->close();
         
-        // Get updated attendance record
+        // Get updated attendance record with server timestamp
         $check_stmt = $conn->prepare("
-            SELECT attendance_id, check_in_time, status
+            SELECT attendance_id, check_in_time, status, DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') as server_time
             FROM attendance
             WHERE registration_id = ?
         ");
@@ -206,7 +206,8 @@ function processCheckIn($qr_data, $conn) {
             'message' => 'Successfully checked in ' . $user_name,
             'registration' => $validation['registration'],
             'attendance' => $attendance,
-            'check_in_time' => $attendance['check_in_time']
+            'check_in_time' => $attendance['check_in_time'],
+            'server_time' => $attendance['server_time']
         ];
     } else {
         $stmt->close();
@@ -268,9 +269,9 @@ function processCheckOut($qr_data, $conn) {
     if ($stmt->execute()) {
         $stmt->close();
         
-        // Get updated attendance record
+        // Get updated attendance record with server timestamp
         $check_stmt = $conn->prepare("
-            SELECT attendance_id, check_in_time, check_out_time, status
+            SELECT attendance_id, check_in_time, check_out_time, status, DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') as server_time
             FROM attendance
             WHERE registration_id = ?
         ");
@@ -284,7 +285,8 @@ function processCheckOut($qr_data, $conn) {
             'message' => 'Successfully checked out ' . $user_name,
             'registration' => $validation['registration'],
             'attendance' => $attendance,
-            'check_out_time' => $attendance['check_out_time']
+            'check_out_time' => $attendance['check_out_time'],
+            'server_time' => $attendance['server_time']
         ];
     } else {
         $stmt->close();
