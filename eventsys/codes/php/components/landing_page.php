@@ -28,8 +28,8 @@ $events_result = $conn->query($events_query);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#8B0000">
-    <meta name="description" content="CCF Alabang — a vibrant community of faith, sports, worship, and purpose. Join us and grow together.">
-    <title>CCF Alabang — Faith. Community. Purpose.</title>
+    <meta name="description" content="B1G — a vibrant community of faith, sports, worship, and purpose. Join us and grow together.">
+    <title>Be One with God — Faith. Community. Purpose.</title>
 
     <link rel="manifest" href="../../manifest.json">
     <link rel="icon" type="image/png" href="../../assets/ccf-b1g-favicon.png">
@@ -113,9 +113,9 @@ $events_result = $conn->query($events_query);
 <!-- ── NAVIGATION ── -->
 <nav id="navbar">
     <a href="#home" class="nav-logo">
-        <img src="../../assets/ccf-b1g-favicon.png" alt="CCF Alabang" class="nav-logo-img">
+        <img src="../../assets/ccf-b1g-favicon.png" alt="Be One with God" class="nav-logo-img">
         <div class="nav-logo-text">
-            <span class="nav-logo-main">CCF Alabang</span>
+            <span class="nav-logo-main">Be One with God</span>
             <span class="nav-logo-sub">Eventix</span>
         </div>
     </a>
@@ -148,7 +148,7 @@ $events_result = $conn->query($events_query);
     <div class="hero-content">
         <span class="hero-badge">
             <i data-lucide="heart" class="icon-sm"></i>
-            CCF ALABANG
+            Be One with God
         </span>
 
         <h1 class="hero-title">
@@ -198,7 +198,7 @@ $events_result = $conn->query($events_query);
     <div class="section-header">
         <span class="section-tag">Who We Are</span>
         <h2 class="section-title">Built on <span class="highlight">Solid Ground</span></h2>
-        <p class="section-subtitle">CCF Alabang is more than a church — it's a family rooted in faith, driven by love, and committed to making a lasting difference in every life we touch.</p>
+        <p class="section-subtitle">B1G is more than a church — it's a family rooted in faith, driven by love, and committed to making a lasting difference in every life we touch.</p>
     </div>
 
     <div class="pillars-grid">
@@ -257,7 +257,7 @@ $events_result = $conn->query($events_query);
     <div class="section-header">
         <span class="section-tag">Get Involved</span>
         <h2 class="section-title">Find Your <span class="highlight">Ministry</span></h2>
-        <p class="section-subtitle">There's a place for everyone at CCF Alabang. Discover the community that fits your passion, skill, and calling.</p>
+        <p class="section-subtitle">There's a place for everyone at B1G. Discover the community that fits your passion, skill, and calling.</p>
     </div>
 
     <div class="ministries-grid">
@@ -316,7 +316,7 @@ $events_result = $conn->query($events_query);
     <div class="section-header">
         <span class="section-tag">Event Gallery</span>
         <h2 class="section-title">Moments That <span class="highlight">Matter</span></h2>
-        <p class="section-subtitle">A glimpse into the energy, faith, and community of CCF Alabang events</p>
+        <p class="section-subtitle">A glimpse into the energy, faith, and community of B1G events</p>
     </div>
 
     <div class="highlights-container">
@@ -480,7 +480,7 @@ $events_result = $conn->query($events_query);
 <section class="cta-section">
     <span class="cta-tag">Ready to Belong?</span>
     <h2 class="cta-title">Your Story Starts Here</h2>
-    <p class="cta-subtitle">Whether you're new to faith or a seasoned believer — there's a seat at the table for you at CCF Alabang. Come as you are.</p>
+    <p class="cta-subtitle">Whether you're new to faith or a seasoned believer — there's a seat at the table for you at B1G. Come as you are.</p>
     <div class="cta-buttons">
         <a href="../auth/index.php" class="btn-white">
             <i data-lucide="user-plus" class="icon-md"></i>
@@ -499,9 +499,9 @@ $events_result = $conn->query($events_query);
         <div class="footer-section">
             <div class="footer-brand-logo">
                 <img src="../../assets/ccf-b1g-favicon.png" alt="CCF Alabang">
-                <span>CCF Alabang</span>
+                <span>Be One with God</span>
             </div>
-            <p>Christ's Commission Fellowship — Alabang. A community committed to knowing Christ and making Him known through every avenue of life.</p>
+            <p>Christ's Commission Fellowship — B1G. A community committed to knowing Christ and making Him known through every avenue of life.</p>
             <div class="social-links">
                 <a href="#" class="social-link" aria-label="Facebook"><i data-lucide="facebook" class="icon-sm"></i></a>
                 <a href="#" class="social-link" aria-label="Instagram"><i data-lucide="instagram" class="icon-sm"></i></a>
@@ -550,7 +550,7 @@ $events_result = $conn->query($events_query);
     </div>
 
     <div class="footer-bottom">
-        <p>&copy; <?= date('Y') ?> CCF Alabang — Eventix. All rights reserved. Made with ❤️ for the community.</p>
+        <p>&copy; <?= date('Y') ?> B1G — Eventix. All rights reserved. Made with ❤️ for the community.</p>
     </div>
 </footer>
 
@@ -707,7 +707,10 @@ function toggleLpDesc(id) {
 function openVolunteerModal(token, title) {
     const protocol = window.location.protocol;
     const host     = window.location.host;
-    const signupUrl = protocol + '//' + host + '/php/auth/volunteer_signup.php?token=' + token;
+    const pathParts = window.location.pathname.split('/');
+    const phpIndex  = pathParts.lastIndexOf('php');
+    const basePath  = phpIndex >= 0 ? pathParts.slice(0, phpIndex + 1).join('/') : '/php';
+    const signupUrl = protocol + '//' + host + basePath + '/auth/volunteer_signup.php?token=' + token;
     const qrUrl     = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(signupUrl);
     const dlUrl     = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&download=1&data=' + encodeURIComponent(signupUrl);
 

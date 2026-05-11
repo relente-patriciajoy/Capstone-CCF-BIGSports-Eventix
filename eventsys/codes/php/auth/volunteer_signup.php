@@ -73,37 +73,41 @@ $already->close();
 
 // Handle signup
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['join'])) {
-    $role_type_id = (int)$_POST['role_type_id'];
-
-    if ($existing) {
-        $error = "You're already signed up for this event as a " . ucfirst($existing['role_name']) . " volunteer.";
+    if (empty($_POST['role_type_id'])) {
+        $error = "Please select a volunteer role.";
     } else {
-        // Verify role belongs to this event
-        $vchk = $conn->prepare("SELECT role_type_id FROM volunteer_role_type WHERE role_type_id = ? AND volunteer_event_id = ?");
-        $vchk->bind_param("ii", $role_type_id, $event['volunteer_event_id']);
-        $vchk->execute();
-        if ($vchk->get_result()->num_rows === 0) {
-            $error = "Invalid role selected.";
+        $role_type_id = (int)$_POST['role_type_id'];
+
+        if ($existing) {
+            $error = "You're already signed up for this event as a " . ucfirst($existing['role_name']) . " volunteer.";
         } else {
-            $ins = $conn->prepare("INSERT INTO volunteer_member (role_type_id, user_id, status) VALUES (?,?,'confirmed')");
-            $ins->bind_param("ii", $role_type_id, $user_id);
-            if ($ins->execute()) {
-                $joined  = true;
-                $message = "You've successfully signed up as a volunteer!";
-                // Refresh existing
-                $existing = ['role_name' => ''];
-                foreach ($roles as $r) {
-                    if ($r['role_type_id'] == $role_type_id) {
-                        $existing['role_name'] = $r['role_name'];
-                        break;
-                    }
-                }
+            // Verify role belongs to this event
+            $vchk = $conn->prepare("SELECT role_type_id FROM volunteer_role_type WHERE role_type_id = ? AND volunteer_event_id = ?");
+            $vchk->bind_param("ii", $role_type_id, $event['volunteer_event_id']);
+            $vchk->execute();
+            if ($vchk->get_result()->num_rows === 0) {
+                $error = "Invalid role selected.";
             } else {
-                $error = "Failed to sign up. Please try again.";
+                $ins = $conn->prepare("INSERT INTO volunteer_member (role_type_id, user_id, status) VALUES (?,?,'confirmed')");
+                $ins->bind_param("ii", $role_type_id, $user_id);
+                if ($ins->execute()) {
+                    $joined  = true;
+                    $message = "You've successfully signed up as a volunteer!";
+                    // Refresh existing
+                    $existing = ['role_name' => ''];
+                    foreach ($roles as $r) {
+                        if ($r['role_type_id'] == $role_type_id) {
+                            $existing['role_name'] = $r['role_name'];
+                            break;
+                        }
+                    }
+                } else {
+                    $error = "Failed to sign up. Please try again.";
+                }
+                $ins->close();
             }
-            $ins->close();
+            $vchk->close();
         }
-        $vchk->close();
     }
 }
 $conn->close();
@@ -117,7 +121,6 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volunteer Sign Up — <?= htmlspecialchars($event['title']) ?></title>
-    <link rel="icon" type="image/png" href="../../assets/eventix-logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../css/auth.css">
     <link rel="stylesheet" href="../../css/volunteer.css">
@@ -144,9 +147,7 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
 
     <!-- Header -->
     <div style="text-align:center;margin-bottom:24px;">
-        <img src="../../assets/eventix-logo.png" alt="Eventix" class="volunteer-signup-logo"
-             style="border-radius:50%;margin-bottom:12px;">
-        <h1 class="volunteer-signup-title" style="font-weight:900;color:#1a1a1a;margin:0 0 4px;">Volunteer Sign Up</h1>
+        <h1 class="volunteer-signup-title" style="font-weight:900;color:#ffffff;margin:0 0 4px;">Volunteer Sign Up</h1>
         <p style="color:#6b7280;font-size:0.9rem;margin:0;">Join the team for this event</p>
     </div>
 
@@ -203,39 +204,45 @@ $role_colors = ['ushering' => '#3b82f6', 'admin' => '#f59e0b', 'technical' => '#
         <div style="background:white;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.07);">
             <h3 style="font-size:1rem;font-weight:700;margin:0 0 16px;color:#1a1a1a;">Choose your volunteer role:</h3>
 
-            <form method="POST" action="">
-                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-                    <?php foreach ($roles as $r):
-                        $color = $role_colors[$r['role_name']] ?? '#6b7280';
-                        $label = $role_labels[$r['role_name']] ?? ucfirst($r['role_name']);
-                    ?>
-                    <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:border-color 0.2s;"
-                           onmouseover="this.style.borderColor='<?= $color ?>'"
-                           onmouseout="this.style.borderColor='#e5e7eb'">
-                        <input type="radio" name="role_type_id" value="<?= $r['role_type_id'] ?>" required
-                               style="width:18px;height:18px;accent-color:<?= $color ?>;">
-                        <div style="flex:1;">
-                            <div style="font-weight:700;color:#1a1a1a;font-size:0.95rem;"><?= $label ?></div>
-                            <?php if ($r['lead_name']): ?>
-                                <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">
-                                    Team Lead: <?= htmlspecialchars($r['lead_name']) ?>
-                                    · <?= $r['member_count'] ?> volunteer(s) so far
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <span style="background:<?= $color ?>20;color:<?= $color ?>;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;">
-                            <?= $label ?>
-                        </span>
-                    </label>
-                    <?php endforeach; ?>
+            <?php if (empty($roles)): ?>
+                <div style="padding:24px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;color:#475569;font-size:0.95rem;">
+                    No volunteer roles are available for this event yet. Please contact the event organizer for assistance.
                 </div>
+            <?php else: ?>
+                <form method="POST" action="">
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+                        <?php foreach ($roles as $r):
+                            $color = $role_colors[$r['role_name']] ?? '#6b7280';
+                            $label = $role_labels[$r['role_name']] ?? ucfirst($r['role_name']);
+                        ?>
+                        <label style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:border-color 0.2s;"
+                               onmouseover="this.style.borderColor='<?= $color ?>'"
+                               onmouseout="this.style.borderColor='#e5e7eb'">
+                            <input type="radio" name="role_type_id" value="<?= $r['role_type_id'] ?>" required
+                                   style="width:18px;height:18px;accent-color:<?= $color ?>;">
+                            <div style="flex:1;">
+                                <div style="font-weight:700;color:#1a1a1a;font-size:0.95rem;"><?= $label ?></div>
+                                <?php if ($r['lead_name']): ?>
+                                    <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">
+                                        Team Lead: <?= htmlspecialchars($r['lead_name']) ?>
+                                        · <?= $r['member_count'] ?> volunteer(s) so far
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <span style="background:<?= $color ?>20;color:<?= $color ?>;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;">
+                                <?= $label ?>
+                            </span>
+                        </label>
+                        <?php endforeach; ?>
+                    </div>
 
-                <button type="submit" name="join"
-                        style="width:100%;padding:14px;background:linear-gradient(135deg,#800020,#5a0016);color:white;border:none;border-radius:50px;font-weight:800;font-size:0.95rem;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <i data-lucide="user-plus" style="width:17px;height:17px;"></i>
-                    Join as Volunteer
-                </button>
-            </form>
+                    <button type="submit" name="join"
+                            style="width:100%;padding:14px;background:linear-gradient(135deg,#800020,#5a0016);color:white;border:none;border-radius:50px;font-weight:800;font-size:0.95rem;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <i data-lucide="user-plus" style="width:17px;height:17px;"></i>
+                        Join as Volunteer
+                    </button>
+                </form>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

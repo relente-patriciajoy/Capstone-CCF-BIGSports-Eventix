@@ -78,7 +78,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
                 $token = bin2hex(random_bytes(16));
                 $vs = $conn->prepare("INSERT INTO volunteer_event (event_id, title, description, event_date, location, qr_token, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $vs->bind_param("isssssi", $new_event_id, $title, $description, $start_time, $venue_name, $token, $user_id);
-                $vs->execute(); $vs->close();
+                $vs->execute();
+                $volunteer_event_id = $vs->insert_id;
+                $vs->close();
+
+                // Save volunteer roles created while adding the event
+                $pending_roles = json_decode($_POST['pending_roles'] ?? '[]', true);
+                if (!empty($pending_roles) && is_array($pending_roles)) {
+                    foreach ($pending_roles as $pr) {
+                        $role_name = trim($pr['name'] ?? '');
+                        $lead_id   = !empty($pr['lead_id']) ? (int)$pr['lead_id'] : null;
+                        if ($role_name) {
+                            $rs = $conn->prepare("INSERT INTO volunteer_role_type (volunteer_event_id, role_name, team_lead_id) VALUES (?, ?, ?)");
+                            $rs->bind_param("isi", $volunteer_event_id, $role_name, $lead_id);
+                            $rs->execute(); $rs->close();
+                        }
+                    }
+                }
             }
         } else {
             $error = "Failed to create event.";
@@ -117,20 +133,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
             $ve_check->bind_param("i", $event_id); $ve_check->execute();
             $ve_check->bind_result($ve_id); $ve_check->fetch(); $ve_check->close();
 
-            if ($has_volunteer && !$ve_id) {
+            $target_vol_event_id = $ve_id;
+            $venue_n = '';
+            if ($has_volunteer) {
+                $venue_n = $conn->query("SELECT name FROM venue WHERE venue_id = (SELECT venue_id FROM event WHERE event_id = $event_id LIMIT 1)")->fetch_assoc()['name'] ?? '';
+            }
+
+            if ($has_volunteer && !$target_vol_event_id) {
                 // Create linked volunteer_event if not exists
                 $token = bin2hex(random_bytes(16));
-                $vs = $conn->prepare("SELECT title, start_time, venue_id FROM event WHERE event_id = ?");
+                $vs = $conn->prepare("SELECT title, start_time FROM event WHERE event_id = ?");
                 $vs->bind_param("i", $event_id); $vs->execute();
-                $vs->bind_result($ev_title, $ev_start, $ev_venue_id); $vs->fetch(); $vs->close();
-                $venue_n = $conn->query("SELECT name FROM venue WHERE venue_id = $ev_venue_id")->fetch_assoc()['name'] ?? '';
+                $vs->bind_result($ev_title, $ev_start); $vs->fetch(); $vs->close();
                 $ins = $conn->prepare("INSERT INTO volunteer_event (event_id, title, description, event_date, location, qr_token, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $ins->bind_param("isssssi", $event_id, $ev_title, $description, $ev_start, $venue_n, $token, $user_id);
                 $ins->execute();
-                $new_vol_event_id = $ins->insert_id;
+                $target_vol_event_id = $ins->insert_id;
                 $ins->close();
+            }
 
-                // Save pending roles if any
+            if ($has_volunteer && $target_vol_event_id) {
+                $update_vol = $conn->prepare("UPDATE volunteer_event SET title=?, description=?, event_date=?, location=? WHERE volunteer_event_id = ?");
+                $update_vol->bind_param("ssssi", $title, $description, $start_time, $venue_n, $target_vol_event_id);
+                $update_vol->execute();
+                $update_vol->close();
+
                 $pending_roles = json_decode($_POST['pending_roles'] ?? '[]', true);
                 if (!empty($pending_roles) && is_array($pending_roles)) {
                     foreach ($pending_roles as $pr) {
@@ -138,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
                         $lead_id   = !empty($pr['lead_id']) ? (int)$pr['lead_id'] : null;
                         if ($role_name) {
                             $rs = $conn->prepare("INSERT INTO volunteer_role_type (volunteer_event_id, role_name, team_lead_id) VALUES (?, ?, ?)");
-                            $rs->bind_param("isi", $new_vol_event_id, $role_name, $lead_id);
+                            $rs->bind_param("isi", $target_vol_event_id, $role_name, $lead_id);
                             $rs->execute(); $rs->close();
                         }
                     }
@@ -188,7 +215,7 @@ if (isset($_GET['edit'])) {
 
         // Get volunteer roles for this event
         $vol_roles = [];
-        $vr = $conn->prepare("SELECT vrt.role_type_id, vrt.role_name, CONCAT(u.first_name,' ',u.last_name) as lead_name FROM volunteer_role_type vrt LEFT JOIN user u ON vrt.team_lead_id = u.user_id WHERE vrt.volunteer_event_id = (SELECT volunteer_event_id FROM volunteer_event WHERE event_id = ? LIMIT 1)");
+        $vr = $conn->prepare("SELECT vrt.role_type_id, vrt.role_name, CONCAT(u.first_name,' ',u.last_name) as lead_name, (SELECT COUNT(*) FROM volunteer_member vm WHERE vm.role_type_id = vrt.role_type_id) AS member_count FROM volunteer_role_type vrt LEFT JOIN user u ON vrt.team_lead_id = u.user_id WHERE vrt.volunteer_event_id = (SELECT volunteer_event_id FROM volunteer_event WHERE event_id = ? LIMIT 1)");
         $vr->bind_param("i", $edit_id); $vr->execute();
         $vol_roles = $vr->get_result()->fetch_all(MYSQLI_ASSOC); $vr->close();
 
@@ -201,9 +228,62 @@ if (isset($_GET['edit'])) {
 $category_result = $conn->query("SELECT category_id, category_name FROM event_category");
 $all_users = $conn->query("SELECT user_id, CONCAT(first_name,' ',last_name) as full_name FROM user ORDER BY first_name");
 
-$stmt = $conn->prepare("SELECT e.event_id, e.title, e.start_time, e.end_time, e.requires_registration, e.show_on_landing, e.has_volunteer, e.has_tables, v.name AS venue FROM event e JOIN venue v ON e.venue_id = v.venue_id JOIN organizer o ON e.organizer_id = o.organizer_id JOIN user u ON o.contact_email = u.email WHERE u.user_id = ?");
-$stmt->bind_param("i", $user_id); $stmt->execute();
-$events = $stmt->get_result();
+$search = trim($_GET['search'] ?? '');
+$status = $_GET['status'] ?? 'all';
+$page = max(1, intval($_GET['page'] ?? 1));
+$per_page = 4;
+
+$allowed_status = ['all', 'upcoming', 'past'];
+if (!in_array($status, $allowed_status, true)) {
+    $status = 'all';
+}
+
+$baseQuery = [];
+if ($search !== '') {
+    $baseQuery['search'] = $search;
+}
+if ($status !== 'all') {
+    $baseQuery['status'] = $status;
+}
+
+$search_sql = '';
+if ($search !== '') {
+    $search_sql = " AND e.title LIKE ?";
+}
+$status_sql = '';
+if ($status === 'upcoming') {
+    $status_sql = " AND e.start_time >= NOW()";
+} elseif ($status === 'past') {
+    $status_sql = " AND e.start_time < NOW()";
+}
+
+$count_sql = "SELECT COUNT(*) AS total FROM event e JOIN venue v ON e.venue_id = v.venue_id JOIN organizer o ON e.organizer_id = o.organizer_id JOIN user u ON o.contact_email = u.email WHERE u.user_id = ?{$search_sql}{$status_sql}";
+$count_stmt = $conn->prepare($count_sql);
+if ($search !== '') {
+    $like_search = "%{$search}%";
+    $count_stmt->bind_param("is", $user_id, $like_search);
+} else {
+    $count_stmt->bind_param("i", $user_id);
+}
+$count_stmt->execute();
+$total_events = $count_stmt->get_result()->fetch_assoc()['total'] ?? 0;
+$count_stmt->close();
+
+$total_pages = max(1, (int) ceil($total_events / $per_page));
+if ($page > $total_pages) {
+    $page = $total_pages;
+}
+$offset = ($page - 1) * $per_page;
+
+$events_sql = "SELECT e.event_id, e.title, e.start_time, e.end_time, e.requires_registration, e.show_on_landing, e.has_volunteer, e.has_tables, v.name AS venue FROM event e JOIN venue v ON e.venue_id = v.venue_id JOIN organizer o ON e.organizer_id = o.organizer_id JOIN user u ON o.contact_email = u.email WHERE u.user_id = ?{$search_sql}{$status_sql} ORDER BY e.start_time DESC LIMIT ? OFFSET ?";
+$events_stmt = $conn->prepare($events_sql);
+if ($search !== '') {
+    $events_stmt->bind_param("isii", $user_id, $like_search, $per_page, $offset);
+} else {
+    $events_stmt->bind_param("iii", $user_id, $per_page, $offset);
+}
+$events_stmt->execute();
+$events = $events_stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html>
@@ -281,6 +361,248 @@ $events = $stmt->get_result();
         .badge-hidden { background: #fef3c7; color: #92400e; }
         .badge-vol    { background: #ede9fe; color: #5b21b6; }
         .badge-table  { background: #fee2e2; color: #991b1b; }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+        .quick-action-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border-radius: 18px;
+            background: #ffffff;
+            border: 1px solid #eff1f6;
+            color: #111827;
+            text-align: center;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            min-height: 135px;
+            text-decoration: none;
+        }
+        .quick-action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+            border-color: #d8b4fe;
+        }
+        .quick-action-card i {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
+        .quick-action-card span {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .event-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .event-search-form {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+            max-width: 520px;
+        }
+        .event-search-form input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            padding: 10px 14px;
+            outline: none;
+            font-size: 0.95rem;
+            color: #111827;
+        }
+        .event-search-form button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+        .event-status-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .filter-pill {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #f8fafc;
+            color: #334155;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .filter-pill.active {
+            background: #7c3aed;
+            color: white;
+            border-color: #7c3aed;
+        }
+        .event-summary {
+            margin-bottom: 16px;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+        .event-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 16px;
+        }
+        .event-card {
+            min-height: 320px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+        .pagination a,
+        .pagination span {
+            padding: 8px 14px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: 1px solid #e5e7eb;
+            color: #475569;
+            font-weight: 600;
+            min-width: 44px;
+            text-align: center;
+        }
+        .pagination a:hover {
+            background: #f3f4f6;
+        }
+        .pagination .active {
+            background: #7c3aed;
+            color: white;
+            border-color: #7c3aed;
+        }
+        .pagination .page-navigation {
+            min-width: auto;
+        }
+        .empty-state {
+            padding: 28px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            color: #475569;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            min-width: 160px;
+            padding: 12px 22px;
+            background: linear-gradient(135deg, #7c3aed, #be185d);
+            border: none;
+            border-radius: 999px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            min-width: 140px;
+            padding: 12px 22px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 999px;
+            color: #111827;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            min-width: auto;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .btn-add {
+            min-width: 140px;
+            padding: 10px 18px;
+            font-size: 0.92rem;
+            border-radius: 999px;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            min-width: 36px;
+            border-radius: 50%;
+            gap: 0;
+        }
+        .btn-icon i {
+            width: 16px;
+            height: 16px;
+        }
+        .btn-delete {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+        .vol-role-item .btn-delete.btn-icon {
+            background: #800020;
+            border-color: #800020;
+            color: white;
+        }
+        .vol-role-item .btn-delete.btn-icon:hover {
+            background: #5b021c;
+        }
+        .vol-role-item .btn-delete.btn-icon i {
+            color: white;
+        }
+        .form-actions .btn-secondary {
+            background: #fafafa;
+            color: #800020;
+            border: 1px solid #e5e7eb;
+            min-width: 140px;
+            padding: 12px 22px;
+            border-radius: 999px;
+        }
+        .form-actions .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+        .btn-primary:hover { opacity: 0.95; }
+        .btn-secondary:hover { background: #e5e7eb; }
         .vol-roles-section {
             margin-top: 20px;
             padding: 16px;
@@ -345,7 +667,7 @@ $events = $stmt->get_result();
         .delete-modal-actions { display: flex; gap: 12px; justify-content: center; }
         .delete-modal-actions .btn-cancel {
             flex: 1; padding: 11px 20px; background: #f3f4f6;
-            border: none; border-radius: 10px; font-weight: 600;
+            color: #800000; border: none; border-radius: 10px; font-weight: 600;
             cursor: pointer; font-family: 'Poppins', sans-serif;
             font-size: 0.9rem; transition: background 0.2s;
         }
@@ -612,9 +934,9 @@ $events = $stmt->get_result();
                                                         <span class="role-lead"> — Lead: <?= htmlspecialchars($vr['lead_name']) ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <button type="button" class="btn-delete btn-sm"
-                                                    onclick="removeRole(this, <?= $vr['role_type_id'] ?>)">
-                                                    <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                                                <button type="button" class="btn-delete btn-sm btn-icon"
+                                                    onclick="confirmDeleteVolunteerRole(this, <?= $vr['role_type_id'] ?>, '<?= htmlspecialchars($vr['role_name'], ENT_QUOTES) ?>', <?= (int)$vr['member_count'] ?>)">
+                                                    <i data-lucide="trash-2"></i>
                                                 </button>
                                             </div>
                                             <?php endforeach; ?>
@@ -632,7 +954,7 @@ $events = $stmt->get_result();
                                                 <option value="<?= $u['user_id'] ?>"><?= htmlspecialchars($u['full_name']) ?></option>
                                             <?php endwhile; ?>
                                         </select>
-                                        <button type="button" class="btn-primary btn-sm" onclick="addRoleInline()">
+                                        <button type="button" class="btn-primary btn-add" onclick="addRoleInline()">
                                             <i data-lucide="plus" style="width:13px;height:13px;"></i> Add
                                         </button>
                                     </div>
@@ -648,7 +970,7 @@ $events = $stmt->get_result();
                         <div class="form-actions">
                             <?php if ($edit_event): ?>
                                 <button type="submit" name="update_event" class="btn-primary">
-                                    <i data-lucide="save"></i> Update Event
+                                    <i data-lucide="save"></i> Save Changes
                                 </button>
                                 <a href="manage_events.php" class="btn-secondary">
                                     <i data-lucide="x"></i> Cancel
@@ -668,16 +990,40 @@ $events = $stmt->get_result();
                 <?php endif; ?>
 
                 <!-- ── MY EVENTS LIST ── -->
-                <div class="hub-section">
+                <div class="hub-section" id="my-events">
                     <h2 class="section-title-with-icon">
                         <i data-lucide="calendar"></i> My Events
                     </h2>
-                    <div class="event-list">
-                        <?php while ($row = $events->fetch_assoc()):
-                            $can_edit   = canAccessEvent($conn, $user_id, $row['event_id'], 'edit');
-                            $can_delete = canAccessEvent($conn, $user_id, $row['event_id'], 'delete');
-                        ?>
-                            <div class="event-card" style="display:flex;flex-direction:column;">
+                    <div class="event-controls">
+                        <form method="GET" class="event-search-form" action="manage_events.php#my-events">
+                            <input type="text" name="search" placeholder="Search my events..." value="<?= htmlspecialchars($search) ?>">
+                            <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+                            <button type="submit" class="btn-primary btn-sm">
+                                <i data-lucide="search" style="width:14px;height:14px;"></i> Search
+                            </button>
+                        </form>
+                        <div class="event-status-filters">
+                            <?php foreach ([ 'all' => 'All', 'upcoming' => 'Upcoming', 'past' => 'Past'] as $key => $label): ?>
+                                <a href="manage_events.php?<?= htmlspecialchars(http_build_query(array_merge($baseQuery, ['status' => $key, 'page' => 1]))) ?>#my-events" class="filter-pill <?= $status === $key ? 'active' : '' ?>"><?= $label ?></a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div class="event-summary">
+                        <?php if ($total_events === 0): ?>
+                            No events found.
+                        <?php else: ?>
+                            Showing <?= min($total_events, ($page - 1) * $per_page + 1) ?> - <?= min($total_events, $page * $per_page) ?> of <?= $total_events ?> events
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($total_events === 0): ?>
+                        <div class="empty-state">There are no events that match this filter. Try a different search or change the status.</div>
+                    <?php else: ?>
+                        <div class="event-list">
+                            <?php while ($row = $events->fetch_assoc()):
+                                $can_edit   = canAccessEvent($conn, $user_id, $row['event_id'], 'edit');
+                                $can_delete = canAccessEvent($conn, $user_id, $row['event_id'], 'delete');
+                            ?>
+                                <div class="event-card">
                                 <h3><?= htmlspecialchars($row['title']) ?></h3>
 
                                 <!-- Status badges -->
@@ -736,6 +1082,25 @@ $events = $stmt->get_result();
                                 </div>
                             </div>
                         <?php endwhile; ?>
+                        </div>
+                        <?php if ($total_pages > 1): ?>
+                            <div class="pagination">
+                                <?php if ($page > 1): ?>
+                                    <a href="manage_events.php?<?= htmlspecialchars(http_build_query(array_merge($baseQuery, ['page' => $page - 1]))) ?>#my-events" class="page-navigation">Previous</a>
+                                <?php endif; ?>
+                                <?php for ($p = 1; $p <= $total_pages; $p++): ?>
+                                    <?php if ($p === $page): ?>
+                                        <span class="active"><?= $p ?></span>
+                                    <?php else: ?>
+                                        <a href="manage_events.php?<?= htmlspecialchars(http_build_query(array_merge($baseQuery, ['page' => $p]))) ?>#my-events"><?= $p ?></a>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+                                <?php if ($page < $total_pages): ?>
+                                    <a href="manage_events.php?<?= htmlspecialchars(http_build_query(array_merge($baseQuery, ['page' => $page + 1]))) ?>#my-events" class="page-navigation">Next</a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
                     </div>
                 </div>
 
@@ -758,9 +1123,102 @@ $events = $stmt->get_result();
         </div>
     </div>
 
+    <!-- Delete volunteer role confirmation modal -->
+    <div class="delete-modal-overlay" id="roleDeleteModal">
+        <div class="delete-modal">
+            <div class="delete-modal-icon">
+                <i data-lucide="trash-2" style="width:28px;height:28px;"></i>
+            </div>
+            <h3>Delete Volunteer Role?</h3>
+            <p id="roleDeleteModalText">Are you sure you want to delete this volunteer role? Existing signups for this role may be affected.</p>
+            <div class="delete-modal-actions">
+                <button class="btn-cancel" onclick="closeRoleDeleteModal()">Cancel</button>
+                <button id="confirmRoleDeleteBtn" class="btn-confirm-delete" type="button" onclick="proceedDeleteVolunteerRole()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unsaved changes modal -->
+    <div class="delete-modal-overlay" id="unsavedModal">
+        <div class="delete-modal">
+            <div class="delete-modal-icon">
+                <i data-lucide="alert-triangle" style="width:28px;height:28px;color:#f59e0b;"></i>
+            </div>
+            <h3>Unsaved Changes</h3>
+            <p>You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.</p>
+            <div class="delete-modal-actions">
+                <button class="btn-cancel" onclick="closeUnsavedModal()">Stay on Page</button>
+                <button class="btn-confirm-delete" onclick="proceedLeavePage()">Leave Anyway</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
     lucide.createIcons();
+
+    const editForm = document.querySelector('.event-form');
+    const unsavedModal = document.getElementById('unsavedModal');
+    let isFormDirty = false;
+    let pendingNavigationUrl = null;
+
+    function markFormDirty() {
+        if (!isFormDirty) {
+            isFormDirty = true;
+        }
+    }
+
+    if (editForm) {
+        const watchFields = editForm.querySelectorAll('input, textarea, select');
+        watchFields.forEach(field => {
+            field.addEventListener('change', markFormDirty);
+        });
+
+        editForm.addEventListener('submit', function() {
+            isFormDirty = false;
+        });
+    }
+
+    function closeUnsavedModal() {
+        unsavedModal.classList.remove('active');
+        pendingNavigationUrl = null;
+    }
+
+    function proceedLeavePage() {
+        isFormDirty = false;
+        const urlToNavigate = pendingNavigationUrl;
+        closeUnsavedModal();
+        if (urlToNavigate) {
+            window.location.href = urlToNavigate;
+        }
+    }
+
+    function showUnsavedModal(targetUrl = null) {
+        if (targetUrl) {
+            pendingNavigationUrl = targetUrl;
+        }
+        unsavedModal.classList.add('active');
+    }
+
+    // Intercept sidebar navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarLinks = document.querySelectorAll('.sidebar a[href]');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (isFormDirty && !this.classList.contains('btn-secondary')) {
+                    e.preventDefault();
+                    showUnsavedModal(this.href);
+                }
+            });
+        });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 
     function confirmDelete(eventId, title) {
         document.getElementById('deleteModalText').textContent =
@@ -774,14 +1232,49 @@ $events = $stmt->get_result();
         document.getElementById('deleteModal').classList.remove('active');
     }
 
+    let roleDeleteTarget = null;
+    function confirmDeleteVolunteerRole(btn, roleId, roleName, assignedCount) {
+        roleDeleteTarget = { btn, roleId };
+        let message = 'Are you sure you want to delete the volunteer role "' + roleName + '"?';
+        if (assignedCount > 0) {
+            message += ' There ' + (assignedCount === 1 ? 'is 1 volunteer' : 'are ' + assignedCount + ' volunteers') + ' currently assigned to this role.';
+        } else {
+            message += ' No volunteers are currently assigned to this role.';
+        }
+        message += ' Deleting it may affect any related signups.';
+        document.getElementById('roleDeleteModalText').textContent = message;
+        document.getElementById('roleDeleteModal').classList.add('active');
+    }
+
+    function closeRoleDeleteModal() {
+        roleDeleteTarget = null;
+        document.getElementById('roleDeleteModal').classList.remove('active');
+    }
+
+    function proceedDeleteVolunteerRole() {
+        if (!roleDeleteTarget) return;
+        removeRole(roleDeleteTarget.btn, roleDeleteTarget.roleId);
+        closeRoleDeleteModal();
+    }
+
     // Close on overlay click
     document.getElementById('deleteModal').addEventListener('click', function(e) {
         if (e.target === this) closeDeleteModal();
     });
+    document.getElementById('roleDeleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRoleDeleteModal();
+    });
+    document.getElementById('unsavedModal').addEventListener('click', function(e) {
+        if (e.target === this) closeUnsavedModal();
+    });
 
     // Close on Escape
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeDeleteModal();
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+            closeRoleDeleteModal();
+            closeUnsavedModal();
+        }
     });
 
     function toggleSubFields(id, show) {
@@ -810,6 +1303,7 @@ $events = $stmt->get_result();
         // Add to pending list
         pendingRoles.push({ name, lead_id: leadId, lead_name: leadName });
         document.getElementById('pending_roles').value = JSON.stringify(pendingRoles);
+        markFormDirty();
 
         // Render in UI
         const list = document.getElementById('vol_roles_list');
@@ -837,6 +1331,7 @@ $events = $stmt->get_result();
         pendingRoles[idx] = null; // nullify instead of splice to keep indices
         document.getElementById('pending_roles').value = JSON.stringify(pendingRoles.filter(r => r !== null));
         btn.closest('.vol-role-item').remove();
+        markFormDirty();
     }
 
     function removeRole(btn, roleId) {
@@ -844,6 +1339,7 @@ $events = $stmt->get_result();
         deletedRoles.push(roleId);
         document.getElementById('deleted_roles').value = JSON.stringify(deletedRoles);
         btn.closest('.vol-role-item').remove();
+        markFormDirty();
     }
 
     // Allow Enter key to add role

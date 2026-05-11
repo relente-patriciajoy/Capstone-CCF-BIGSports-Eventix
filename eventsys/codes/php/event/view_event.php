@@ -75,14 +75,14 @@ if ($event['has_volunteer']) {
 
         // Get all volunteer members per role
         $vm = $conn->prepare("
-            SELECT vm.volunteer_member_id, vm.role_type_id, vm.status, vm.created_at,
+            SELECT vm.volunteer_member_id, vm.role_type_id, vm.status, vm.joined_at,
                    u.first_name, u.last_name, u.email, u.phone, u.gender
             FROM volunteer_member vm
             JOIN user u ON vm.user_id = u.user_id
             WHERE vm.role_type_id IN (
                 SELECT role_type_id FROM volunteer_role_type WHERE volunteer_event_id = ?
             )
-            ORDER BY vm.created_at ASC
+            ORDER BY vm.joined_at ASC
         ");
         $vm->bind_param("i", $vol_event['volunteer_event_id']);
         $vm->execute();
@@ -160,7 +160,7 @@ if ($event['has_tables'] && $event['num_tables']) {
         .empty-tab i { width:48px; height:48px; color:#d0d0d0; margin-bottom:12px; }
         .btn-view-role {
             display:inline-flex; align-items:center; gap:5px;
-            padding:6px 12px; background:#ede9fe; color:#5b21b6;
+            padding:6px 12px; background:#800020; color:white;
             border:none; border-radius:8px; font-size:0.82rem;
             font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif;
             transition:all 0.2s;
@@ -412,11 +412,13 @@ if ($event['has_tables'] && $event['num_tables']) {
                                 <h3 style="margin-bottom:16px;color:#5b21b6;">Volunteer Sign-up QR Code</h3>
                                 <?php
                                 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                $signup_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . '/php/auth/volunteer_signup.php?token=' . $vol_event['qr_token'];
+                                $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+                                $basePath = rtrim(dirname(dirname($currentPath)), '/\\');
+                                $signup_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . $basePath . '/auth/volunteer_signup.php?token=' . $vol_event['qr_token'];
                                 $qr_img = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($signup_url);
                                 ?>
                                 <img src="<?= $qr_img ?>" alt="Volunteer QR Code">
-                                <div class="qr-url"><?= htmlspecialchars($signup_url) ?></div>
+                                <div class="qr-hint" style="margin-top:12px;font-size:0.9rem;color:#6b6b6b;">Scan this QR code to sign up as a volunteer.</div>
                                 <a href="https://api.qrserver.com/v1/create-qr-code/?size=600x600&download=1&data=<?= urlencode($signup_url) ?>"
                                    class="btn-primary" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;">
                                     <i data-lucide="download" style="width:15px;height:15px;"></i> Download QR
@@ -528,7 +530,7 @@ if ($event['has_tables'] && $event['num_tables']) {
                     </thead>
                     <tbody>`;
             members.forEach((m, i) => {
-                const date = new Date(m.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+                const date = new Date(m.joined_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
                 const statusColor = m.status === 'confirmed' ? '#065f46' : '#92400e';
                 const statusBg    = m.status === 'confirmed' ? '#d1fae5' : '#fef3c7';
                 html += `<tr>
