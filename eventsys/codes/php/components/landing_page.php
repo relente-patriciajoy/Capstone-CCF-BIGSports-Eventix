@@ -31,7 +31,6 @@ $events_result = $conn->query($events_query);
     <meta name="description" content="B1G — a vibrant community of faith, sports, worship, and purpose. Join us and grow together.">
     <title>Be One with God — Faith. Community. Purpose.</title>
 
-    <link rel="manifest" href="../../manifest.json">
     <link rel="icon" type="image/png" href="../../assets/ccf-b1g-favicon.png">
     <link rel="apple-touch-icon" href="../../assets/ccf-b1g-favicon.png">
 
@@ -106,6 +105,46 @@ $events_result = $conn->query($events_query);
             flex: 0 0 calc((100% - 24px) / 2) !important;
         }
     }
+
+    /* ── Navbar always on top of sidebar ── */
+    #navbar { z-index: 1100 !important; }
+    #navLinks { z-index: 1050 !important; }
+
+    /* ── Signup CTA inside hamburger sidebar — mobile only ── */
+    .nav-mobile-cta-divider,
+    .nav-mobile-cta-link {
+        display: none !important;
+    }
+    @media (max-width: 768px) {
+        .nav-mobile-cta-divider {
+            display: block !important;
+            margin: 12px 20px 0;
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.12);
+        }
+        .nav-mobile-cta-link {
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 16px 6px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, var(--maroon, #800020) 0%, var(--dark-maroon, #5a0016) 100%);
+            color: #ffffff !important;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            letter-spacing: 0.2px;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(128, 0, 32, 0.3);
+            width: auto;
+        }
+        .nav-mobile-cta-link:hover {
+            background: linear-gradient(135deg, var(--dark-maroon, #5a0016) 0%, #400010 100%);
+            transform: translateX(4px);
+        }
+    }
     </style>
 </head>
 <body>
@@ -126,8 +165,16 @@ $events_result = $conn->query($events_query);
         <li><a href="#ministries">Ministries</a></li>
         <li><a href="#events">Events</a></li>
         <li><a href="#contact">Contact</a></li>
+
+        <!-- Signup CTA inside the mobile sidebar menu -->
+        <hr class="nav-mobile-cta-divider">
+        <a href="../auth/index.php" class="nav-mobile-cta-link">
+            <i data-lucide="user-plus" class="icon-sm"></i>
+            Signup
+        </a>
     </ul>
 
+    <!-- Desktop CTA (hidden on mobile) -->
     <a href="../auth/index.php" class="nav-cta">Join the Community</a>
 
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
@@ -502,11 +549,42 @@ $events_result = $conn->query($events_query);
                 <span>Be One with God</span>
             </div>
             <p>Christ's Commission Fellowship — B1G. A community committed to knowing Christ and making Him known through every avenue of life.</p>
+
+            <!-- ── SOCIAL LINKS ── -->
             <div class="social-links">
-                <a href="#" class="social-link" aria-label="Facebook"><i data-lucide="facebook" class="icon-sm"></i></a>
-                <a href="#" class="social-link" aria-label="Instagram"><i data-lucide="instagram" class="icon-sm"></i></a>
-                <a href="#" class="social-link" aria-label="YouTube"><i data-lucide="youtube" class="icon-sm"></i></a>
-                <a href="#" class="social-link" aria-label="Email"><i data-lucide="mail" class="icon-sm"></i></a>
+                <!-- Facebook -->
+                <a href="https://web.facebook.com/B1Galabang"
+                   class="social-link"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   aria-label="Facebook">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                    </svg>
+                </a>
+
+                <!-- Instagram -->
+                <a href="https://www.instagram.com/b1galabang/"
+                   class="social-link"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   aria-label="Instagram">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                </a>
+
+                <!-- Email -->
+                <a href="mailto:eventix.system@gmail.com"
+                   class="social-link"
+                   aria-label="Send us an email">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <polyline points="2,4 12,13 22,4"/>
+                    </svg>
+                </a>
             </div>
         </div>
 
@@ -573,6 +651,10 @@ navOverlay.addEventListener('click', closeMenu);
 document.querySelectorAll('.nav-links a').forEach(link => {
     link.addEventListener('click', closeMenu);
 });
+
+// Close menu when the in-sidebar CTA is tapped
+const mobileCta = document.querySelector('.nav-mobile-cta-link');
+if (mobileCta) mobileCta.addEventListener('click', closeMenu);
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
@@ -668,6 +750,7 @@ hlSection.addEventListener('mouseenter', () => clearInterval(autoplay));
 hlSection.addEventListener('mouseleave', () => {
     autoplay = setInterval(() => goToHighlight((currentIdx + 1) % highlightsData.length), 5000);
 });
+
 // ── Landing page description See more / See less ──
 function toggleLpDesc(id) {
     const p     = document.getElementById(id);
@@ -678,6 +761,7 @@ function toggleLpDesc(id) {
     full.style.display  = showing ? 'none' : '';
 }
 </script>
+
 <!-- Volunteer QR Modal -->
 <div id="volunteerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);z-index:2000;align-items:center;justify-content:center;padding:20px;">
     <div style="background:white;border-radius:20px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;">
