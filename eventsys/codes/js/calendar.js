@@ -42,7 +42,10 @@ class EventCalendar {
   async fetchEvents() {
     try {
       const response = await fetch('get_events.php');
-      const data = await response.json();
+      const text = await response.text();
+      console.log('get_events.php response status:', response.status);
+      console.log('get_events.php response body:', text);
+      const data = JSON.parse(text);
       if (data.success) {
         this.events = data.events.map(event => ({
           ...event,
