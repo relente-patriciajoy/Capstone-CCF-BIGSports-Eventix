@@ -34,7 +34,7 @@ if ($user_role === 'admin' || hasPermission($conn, $user_id, 'attendance.view.al
 }
 $events = $event_query->get_result();
 
-$selected_event = $_GET['event_id'] ?? null;
+$selected_event = isset($_GET['event_id']) ? (int)$_GET['event_id'] : null;
 $attendances = null; $event_title = '';
 
 if ($selected_event) {

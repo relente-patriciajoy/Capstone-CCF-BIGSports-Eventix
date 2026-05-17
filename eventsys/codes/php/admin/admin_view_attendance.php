@@ -16,7 +16,7 @@ $role      = $_SESSION['role'];
 
 $events_query = $conn->query("SELECT event_id, title FROM event ORDER BY start_time DESC");
 
-$selected_event = $_GET['event_id'] ?? null;
+$selected_event = isset($_GET['event_id']) ? (int)$_GET['event_id'] : null;
 $attendances    = [];
 
 if ($selected_event) {

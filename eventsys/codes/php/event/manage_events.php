@@ -71,6 +71,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
         $stmt->bind_param("ssssiiiiiiiiiii", $title, $description, $start_time, $end_time, $venue_id, $organizer_id, $capacity, $category_id, $has_tables, $gender_separated, $num_tables, $seats_per_table, $requires_registration, $show_on_landing, $has_volunteer);
         if ($stmt->execute()) {
             $new_event_id = $stmt->insert_id;
+            
+            // AUTO-GRANT FULL ACCESS TO EVENT CREATOR
+            autoGrantCreatorEventAccess($conn, $new_event_id, $organizer_id);
+            
             $message = "Event created successfully!";
 
             // If has_volunteer, create a linked volunteer_event record
@@ -105,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_event'])) {
 
 // ── UPDATE EVENT ──
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
-    $event_id = $_POST['event_id'];
+    $event_id = (int)$_POST['event_id'];
     if (!canAccessEvent($conn, $user_id, $event_id, 'edit')) {
         $error = "You don't have permission to edit this event.";
     } else {
@@ -192,7 +196,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_event'])) {
 
 // ── DELETE EVENT ──
 if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
+    $delete_id = (int)$_GET['delete'];
     if (!canAccessEvent($conn, $user_id, $delete_id, 'delete')) {
         $error = "You don't have permission to delete this event.";
     } else {

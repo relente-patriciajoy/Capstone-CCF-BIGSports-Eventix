@@ -12,8 +12,8 @@ $message  = "";
 $error    = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['change_role'])) {
-    $target_user_id = $_POST['user_id'];
-    $new_role_id    = $_POST['new_role_id'];
+    $target_user_id = (int)$_POST['user_id'];
+    $new_role_id    = (int)$_POST['new_role_id'];
     $reason         = $_POST['reason'] ?? 'Role change by admin';
     $stmt = $conn->prepare("UPDATE user u JOIN role r ON r.role_id = ? SET u.role_id = ?, u.role = r.role_name WHERE u.user_id = ?");
     $stmt->bind_param("iii", $new_role_id, $new_role_id, $target_user_id);
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['change_role'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['toggle_permissions'])) {
-    $target_user_id       = $_POST['user_id'];
+    $target_user_id       = (int)$_POST['user_id'];
     $selected_permissions = $_POST['permissions'] ?? [];
     $reason               = $_POST['reason'] ?? 'Batch permission update';
     $all_perms_query = $conn->query("SELECT permission_name FROM permission");
@@ -41,8 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['toggle_permissions'])
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['set_event_access'])) {
-    $target_user_id = $_POST['user_id'];
-    $event_id       = $_POST['event_id'];
+    $target_user_id = (int)$_POST['user_id'];
+    $event_id       = (int)$_POST['event_id'];
     $reason         = $_POST['reason'] ?? 'Event access granted by admin';
     $permissions = [
         'view'              => isset($_POST['can_view']),

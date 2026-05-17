@@ -7,8 +7,8 @@ require_once('../../includes/db.php');
 
 header('Content-Type: application/json');
 
-$user_id = $_GET['user_id'] ?? null;
-$event_id = $_GET['event_id'] ?? null;
+$user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+$event_id = isset($_GET['event_id']) ? (int)$_GET['event_id'] : null;
 
 if (!$user_id || !$event_id) {
     echo json_encode(['success' => false, 'error' => 'User ID and Event ID required']);

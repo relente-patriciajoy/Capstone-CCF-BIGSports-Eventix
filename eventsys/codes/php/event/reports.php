@@ -34,7 +34,7 @@ if ($user_role === 'admin' || hasPermission($conn, $user_id, 'event.view.all')) 
 }
 $events = $eq->get_result();
 
-$selected_event = $_GET['event_id'] ?? null;
+$selected_event = isset($_GET['event_id']) ? (int)$_GET['event_id'] : null;
 $report_data = null;
 
 if ($selected_event) {

@@ -44,6 +44,9 @@
         <a href="/Registration-System/eventsys/codes/php/admin/admin_all_events.php"     class="<?= basename($_SERVER['PHP_SELF']) === 'admin_all_events.php'     ? 'active' : '' ?>">
             <i data-lucide="calendar"></i> All Events
         </a>
+        <a href="/Registration-System/eventsys/codes/php/admin/manage_event_access.php"  class="<?= basename($_SERVER['PHP_SELF']) === 'manage_event_access.php'  ? 'active' : '' ?>">
+            <i data-lucide="lock"></i> Event Access
+        </a>
         <a href="/Registration-System/eventsys/codes/php/admin/admin_view_attendance.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin_view_attendance.php' ? 'active' : '' ?>">
             <i data-lucide="users"></i> Attendance
         </a>

@@ -12,7 +12,7 @@ require_once('table_autoassign.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['event_id'])) {
     $user_id  = $_SESSION['user_id'];
-    $event_id = $_POST['event_id'];
+    $event_id = (int)$_POST['event_id'];
     $maxCapacity = $_POST['capacity'] ?? 0;
 
     // ── Block registration if event has already ended ──
