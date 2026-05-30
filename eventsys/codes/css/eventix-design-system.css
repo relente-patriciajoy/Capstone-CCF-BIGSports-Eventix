@@ -1,0 +1,962 @@
+/* ============================================================
+   EVENTIX UNIFIED DESIGN SYSTEM
+   Drop this file AFTER style.css, sidebar.css, management.css,
+   and event_head.css in every page's <head>.
+   It overrides the colour chaos and layout issues without
+   touching a single PHP file.
+   ============================================================ */
+
+/* ── 1. DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  /* 60 % — warm off-white / cream backgrounds */
+  --ds-bg-page:        #F7E7CE;   /* page canvas */
+  --ds-bg-card:        #FFFFFF;   /* card / panel surfaces */
+  --ds-bg-card-soft:   #FDF6EC;   /* subtle card variant */
+  --ds-bg-input:       #FEFAF4;   /* form inputs */
+
+  /* 30 % — deep maroon structure */
+  --ds-maroon:         #58181F;   /* primary brand */
+  --ds-maroon-deep:    #3D0E14;   /* hover / active */
+  --ds-maroon-mid:     #7A2229;   /* lighter accent */
+  --ds-maroon-tint:    #F9EEF0;   /* maroon bg tint for hover states */
+  --ds-maroon-light:   #FBEAEC;   /* very light maroon wash */
+
+  /* 10 % — white / warm gold CTAs */
+  --ds-cta-bg:         #58181F;   /* primary button bg */
+  --ds-cta-text:       #FFFFFF;   /* primary button text — ALWAYS white */
+  --ds-gold:           #C9A84C;   /* accent gold (badges, highlights) */
+  --ds-gold-tint:      #FEF8E8;
+
+  /* Text */
+  --ds-text-primary:   #1A0A0C;
+  --ds-text-secondary: #5A3A3E;
+  --ds-text-muted:     #9A7A7F;
+  --ds-text-inverse:   #FFFFFF;
+
+  /* Status colours (readable in both directions) */
+  --ds-success-bg:     #D1FAE5;
+  --ds-success-text:   #065F46;
+  --ds-warning-bg:     #FEF3C7;
+  --ds-warning-text:   #92400E;
+  --ds-danger-bg:      #FEE2E2;
+  --ds-danger-text:    #991B1B;
+  --ds-info-bg:        #DBEAFE;
+  --ds-info-text:      #1E40AF;
+
+  /* Borders */
+  --ds-border:         #E8D5B7;
+  --ds-border-strong:  #C9A884;
+
+  /* Shadows */
+  --ds-shadow-sm:  0 1px 3px rgba(88,24,31,0.08);
+  --ds-shadow-md:  0 4px 12px rgba(88,24,31,0.12);
+  --ds-shadow-lg:  0 8px 24px rgba(88,24,31,0.16);
+
+  /* Radii */
+  --ds-radius-sm:  6px;
+  --ds-radius-md:  10px;
+  --ds-radius-lg:  14px;
+  --ds-radius-xl:  20px;
+
+  /* Sidebar width (matches existing sidebar.css) */
+  --ds-sidebar-w: 260px;
+}
+
+
+/* ── 2. PAGE BACKGROUND ────────────────────────────────────── */
+body {
+  background: var(--ds-bg-page) !important;
+  color: var(--ds-text-primary) !important;
+}
+
+/* Dashboard shell */
+.dashboard-layout {
+  background: var(--ds-bg-page) !important;
+}
+
+
+/* ── 3. MAIN CONTENT — max-width + proper centering ───────── */
+/*
+   The core layout problem: .main-content has no max-width,
+   so banners and cards stretch to full viewport width.
+   We fix this with a content wrapper approach.
+*/
+.main-content {
+  background: var(--ds-bg-page) !important;
+  padding: 32px !important;
+  /* For tablet & desktop — subtract sidebar */
+}
+
+/* Inner content wrapper (applied via an extra div, OR we just
+   constrain .main-content's direct children) */
+.main-content > *:not(.banner) {
+  max-width: 1200px;
+  /* Let it grow but never exceed 1200px */
+}
+
+/* On smaller screens the sidebar becomes a drawer, so content
+   goes full-width — sidebar.css already handles that. */
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: var(--ds-sidebar-w);
+    width: calc(100% - var(--ds-sidebar-w));
+  }
+}
+
+
+/* ── 4. BANNER — fix the "hollow middle" problem ──────────── */
+/*
+   Original: display:flex; justify-content:space-between
+   Problem:  on wide screens there is a giant empty gap in the centre.
+   Fix:      CSS Grid with fixed logo column + auto text column.
+             Also cap the banner width so it never looks absurd.
+*/
+.banner {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+
+  max-width: 1200px !important;
+  width: 100% !important;
+
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  box-shadow: var(--ds-shadow-md) !important;
+  border-radius: var(--ds-radius-lg) !important;
+  padding: 36px 40px !important;
+  margin-bottom: 32px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle decorative circle — keeps the design from being flat */
+.banner::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.banner h1 {
+  font-size: 1.9rem !important;
+  font-weight: 700 !important;
+  color: var(--ds-text-inverse) !important;
+  margin: 0 0 6px !important;
+  line-height: 1.2 !important;
+}
+
+.banner p {
+  color: rgba(255,255,255,0.82) !important;
+  font-size: 0.97rem !important;
+  margin: 0 !important;
+}
+
+.banner img {
+  height: 44px !important;
+  width: auto !important;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.25)) !important;
+  flex-shrink: 0 !important;
+}
+
+/* Event Head / Admin badge inside the banner */
+.event-head-badge,
+.admin-badge {
+  background: rgba(255,255,255,0.18) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
+  padding: 5px 14px !important;
+  border-radius: 20px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-bottom: 10px !important;
+}
+
+/* Mobile banner */
+@media (max-width: 768px) {
+  .banner {
+    grid-template-columns: 1fr !important;
+    padding: 24px 20px !important;
+  }
+  .banner img { display: none !important; }
+  .banner h1  { font-size: 1.45rem !important; }
+}
+
+
+/* ── 5. ADMIN HEADER (admin pages use .admin-header) ──────── */
+.admin-header,
+.management-header.admin-style {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  max-width: 1200px !important;
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  border-radius: var(--ds-radius-lg) !important;
+  padding: 36px 40px !important;
+  margin-bottom: 28px !important;
+  box-shadow: var(--ds-shadow-md) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-header h1,
+.management-header.admin-style h1 {
+  color: var(--ds-text-inverse) !important;
+  font-size: 2rem !important;
+  margin: 0 0 6px !important;
+}
+
+.admin-header p,
+.management-header.admin-style p {
+  color: rgba(255,255,255,0.82) !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+}
+
+
+/* ── 6. CARDS ──────────────────────────────────────────────── */
+.card,
+.management-card,
+.eh-card,
+.backup-card,
+.stat-card {
+  background: var(--ds-bg-card) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-radius-lg) !important;
+  box-shadow: var(--ds-shadow-sm) !important;
+}
+
+/* Remove the red top bar that every .card has — it clashes with maroon */
+.card::before { opacity: 0 !important; }
+/* Restore a tasteful maroon version on hover only */
+.card:hover::before {
+  opacity: 1 !important;
+  background: linear-gradient(90deg, var(--ds-maroon), var(--ds-maroon-mid)) !important;
+}
+
+.card:hover,
+.management-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--ds-shadow-md) !important;
+}
+
+/* Stat cards — maroon gradient */
+.stat-card {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  border-color: transparent !important;
+  color: #FFFFFF !important;
+}
+
+.stat-card h3,
+.stat-card-value,
+.stat-card-change,
+.eh-stat-number,
+.eh-stat-label {
+  color: #FFFFFF !important;
+}
+
+.stat-card-change.negative { color: #FCA5A5 !important; }
+
+/* EH stat cards */
+.eh-stat-card {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  border-radius: var(--ds-radius-md) !important;
+  border: none !important;
+}
+
+
+/* ── 7. SIDEBAR ────────────────────────────────────────────── */
+/* sidebar.css already uses #1a1a1a — that's fine and intentional
+   (dark sidebar + cream page = great contrast).
+   We just reinforce maroon accents. */
+.sidebar nav a.active,
+.sidebar nav a.active::before {
+  background: linear-gradient(135deg, rgba(88,24,31,0.38) 0%, rgba(61,14,20,0.22) 100%) !important;
+  border-left-color: var(--ds-maroon-mid) !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb { background: var(--ds-maroon) !important; }
+
+
+/* ── 8. BUTTONS — the #1 readability rule:
+         Every button must have ≥4.5:1 contrast ratio.
+         Primary  → maroon bg + WHITE text
+         Secondary→ cream bg  + maroon text + maroon border
+         Danger   → light red bg + dark red text
+         Edit     → warm amber bg + dark amber text
+   ─────────────────────────────────────────────────────────── */
+
+/* ─ Primary ─ */
+.btn-primary,
+.btn.btn-primary,
+.action-btn-primary,
+.event-register-btn,
+.eh-btn-primary,
+.btn-verify,
+.auth-button,
+.calendar-today-btn,
+button[type="submit"]:not(.btn-delete):not(.btn-secondary):not(.btn-edit):not(.btn-cancel) {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: var(--ds-text-inverse) !important;   /* WHITE — never black */
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(88,24,31,0.25) !important;
+}
+
+.btn-primary:hover,
+.btn.btn-primary:hover,
+.eh-btn-primary:hover {
+  background: linear-gradient(135deg, var(--ds-maroon-deep) 0%, #2A0810 100%) !important;
+  color: var(--ds-text-inverse) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(88,24,31,0.35) !important;
+}
+
+/* ─ Secondary ─ */
+.btn-secondary,
+.btn.btn-secondary,
+.eh-btn-secondary,
+.btn-cancel {
+  background: var(--ds-bg-card) !important;
+  color: var(--ds-maroon) !important;         /* maroon text on white */
+  border: 1.5px solid var(--ds-maroon) !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary:hover,
+.btn.btn-secondary:hover {
+  background: var(--ds-maroon-light) !important;
+  color: var(--ds-maroon-deep) !important;
+  transform: none !important;
+}
+
+/* ─ Edit (amber) — dark text on amber is fine ─ */
+.btn-edit,
+.edit-link {
+  background: var(--ds-warning-bg) !important;
+  color: var(--ds-warning-text) !important;   /* dark amber — readable */
+  border: 1px solid #FCD34D !important;
+}
+
+.btn-edit:hover,
+.edit-link:hover {
+  background: #FCD34D !important;
+  color: #78350F !important;
+}
+
+/* ─ Delete (danger) — white text on red bg ─ */
+.btn-delete,
+.delete-link {
+  background: var(--ds-danger-bg) !important;
+  color: var(--ds-danger-text) !important;    /* dark red on light red */
+  border: 1px solid #FCA5A5 !important;
+}
+
+.btn-delete:hover,
+.delete-link:hover {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;                  /* white text on solid red hover */
+}
+
+/* ─ Outline / ghost buttons ─ */
+.btn-outline,
+.eh-btn-outline,
+.button-outline {
+  background: transparent !important;
+  color: var(--ds-maroon) !important;
+  border: 1.5px solid var(--ds-maroon) !important;
+}
+
+.btn-outline:hover {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+}
+
+/* ─ Nav/Calendar buttons ─ */
+.calendar-nav-btn {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--ds-maroon-deep) !important;
+  color: #FFFFFF !important;
+}
+
+/* ─ EH filter buttons (pill row) ─ */
+.eh-filter-btn {
+  background: var(--ds-bg-card) !important;
+  color: var(--ds-text-secondary) !important;
+  border: 1.5px solid var(--ds-border) !important;
+}
+
+.eh-filter-btn.active {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+  border-color: var(--ds-maroon) !important;
+}
+
+/* ─ Export button ─ */
+.eh-export-btn {
+  background: var(--ds-text-primary) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── 9. TABLES ─────────────────────────────────────────────── */
+.management-table thead,
+.eh-table thead,
+.attendee-table thead,
+.inactive-table thead,
+.engagement-table thead {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+}
+
+.management-table thead th,
+.eh-table thead th,
+.attendee-table thead th,
+.inactive-table thead th,
+.engagement-table thead th {
+  color: #FFFFFF !important;
+}
+
+.management-table tbody tr:hover,
+.eh-table tbody tr:hover {
+  background: var(--ds-maroon-tint) !important;
+}
+
+
+/* ── 10. FORMS / INPUTS ────────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="datetime-local"],
+textarea,
+select,
+.eh-search,
+.eh-select {
+  background: var(--ds-bg-input) !important;
+  border: 1.5px solid var(--ds-border) !important;
+  color: var(--ds-text-primary) !important;
+  border-radius: var(--ds-radius-sm) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.eh-search:focus,
+.eh-select:focus {
+  border-color: var(--ds-maroon) !important;
+  box-shadow: 0 0 0 3px rgba(88,24,31,0.10) !important;
+  outline: none !important;
+  background: #FFFFFF !important;
+}
+
+
+/* ── 11. BADGES / STATUS PILLS ─────────────────────────────── */
+/* Ensure all role / status badges pass contrast */
+.badge-success, .eh-badge-success { background: var(--ds-success-bg) !important; color: var(--ds-success-text) !important; }
+.badge-warning, .eh-badge-warning { background: var(--ds-warning-bg) !important; color: var(--ds-warning-text) !important; }
+.badge-danger,  .eh-badge-danger  { background: var(--ds-danger-bg)  !important; color: var(--ds-danger-text)  !important; }
+.badge-info,    .eh-badge-info    { background: var(--ds-info-bg)    !important; color: var(--ds-info-text)    !important; }
+.badge-gray,    .eh-badge-gray    { background: #F3F4F6               !important; color: #374151               !important; }
+
+
+/* ── 12. DASHBOARD CARDS (home.php quick actions) ──────────── */
+/* The home.php cards have <a> inside with color: white;
+   That caused invisible text on white cards previously.
+   We make the link the maroon CTA colour. */
+.grid-section .card a {
+  color: var(--ds-maroon) !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.grid-section .card a:hover {
+  color: var(--ds-maroon-deep) !important;
+}
+
+
+/* ── 13. ALERT BOXES ───────────────────────────────────────── */
+.management-alert.success,
+.eh-alert-success,
+.eh-alert-msg.success {
+  background: var(--ds-success-bg) !important;
+  color: var(--ds-success-text) !important;
+  border-left-color: #10B981 !important;
+}
+
+.management-alert.error,
+.eh-alert-error,
+.eh-alert-msg.error {
+  background: var(--ds-danger-bg) !important;
+  color: var(--ds-danger-text) !important;
+  border-left-color: #EF4444 !important;
+}
+
+.management-alert.info,
+.eh-alert-info {
+  background: var(--ds-info-bg) !important;
+  color: var(--ds-info-text) !important;
+  border-left-color: #3B82F6 !important;
+}
+
+
+/* ── 14. MANAGEMENT CONTENT AREA (admin pages) ─────────────── */
+.management-content {
+  background: var(--ds-bg-page) !important;
+}
+
+/* Admin stat card icon bg */
+.stat-card-icon {
+  background: rgba(255,255,255,0.18) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--ds-radius-sm) !important;
+}
+
+/* Action cards on admin dashboard */
+.action-card {
+  background: var(--ds-bg-card) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-left: 4px solid var(--ds-maroon) !important;
+  border-radius: var(--ds-radius-md) !important;
+  box-shadow: var(--ds-shadow-sm) !important;
+}
+
+.action-card:hover {
+  box-shadow: var(--ds-shadow-md) !important;
+  transform: translateY(-4px) !important;
+  border-left-color: var(--ds-maroon-deep) !important;
+}
+
+.action-card h3 { color: var(--ds-text-primary) !important; }
+.action-card p  { color: var(--ds-text-secondary) !important; }
+
+
+/* ── 15. QUICK ACTION CARDS (manage_events hub) ────────────── */
+.quick-action-card {
+  background: var(--ds-bg-card) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-radius-lg) !important;
+  box-shadow: var(--ds-shadow-sm) !important;
+  color: var(--ds-text-primary) !important;
+  text-decoration: none !important;
+}
+
+.quick-action-card:hover {
+  border-color: var(--ds-maroon) !important;
+  box-shadow: var(--ds-shadow-md) !important;
+  transform: translateY(-4px) !important;
+}
+
+.quick-action-card h3 { color: var(--ds-text-primary) !important; }
+.quick-action-card p  { color: var(--ds-text-secondary) !important; }
+
+
+/* ── 16. CALENDAR ──────────────────────────────────────────── */
+.calendar-container {
+  background: var(--ds-bg-card) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-radius-lg) !important;
+}
+
+.calendar-day.today {
+  background: linear-gradient(135deg, var(--ds-gold-tint) 0%, #FEF3C7 100%) !important;
+}
+
+.calendar-day.today .calendar-day-number {
+  color: var(--ds-maroon) !important;
+}
+
+.calendar-event {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── 17. AUTH PAGES ────────────────────────────────────────── */
+.auth-button {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.auth-button:hover {
+  background: linear-gradient(135deg, var(--ds-maroon-deep) 0%, #2A0810 100%) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── 18. SECTION TITLES ────────────────────────────────────── */
+.section-title-with-icon,
+.manage-events-container h2,
+.my-events-container h2,
+.eh-card h2,
+.eh-card h3 {
+  color: var(--ds-maroon) !important;
+  border-bottom-color: var(--ds-border) !important;
+}
+
+
+/* ── 19. LINKS ─────────────────────────────────────────────── */
+a { color: var(--ds-maroon) !important; }
+a:hover { color: var(--ds-maroon-deep) !important; }
+
+/* Restore white links inside dark surfaces */
+.sidebar nav a,
+.banner a,
+.admin-header a,
+.stat-card a,
+.eh-stat-card a {
+  color: inherit !important;
+}
+
+
+/* ── 20. GRID LAYOUT — 60/30/10 CONTENT GRID ──────────────── */
+/*
+   Many pages (home, events, my_events) use .grid-section.
+   On wide screens the cards are too wide with minmax(260px,1fr).
+   We cap the grid to prevent cards from becoming absurdly wide.
+*/
+.grid-section {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  max-width: 1200px !important;
+  gap: 20px !important;
+}
+
+/* Event card list inside manage_events */
+.event-list {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  max-width: 1200px !important;
+}
+
+
+/* ── 21. STAT CARDS (management pages) ─────────────────────── */
+.stats-row {
+  max-width: 1200px;
+}
+
+
+/* ── 22. SCROLLBAR (subtle brand touch) ────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--ds-bg-page); }
+::-webkit-scrollbar-thumb {
+  background: var(--ds-border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ds-maroon); }
+
+
+/* ── 23. RESPONSIVE UTILITIES ─────────────────────────────── */
+@media (max-width: 1024px) {
+  :root { --ds-sidebar-w: 240px; }
+  .banner { padding: 28px 24px !important; }
+}
+
+@media (max-width: 768px) {
+  .main-content { padding: 16px !important; }
+  .banner {
+    padding: 22px 18px !important;
+    margin-bottom: 20px !important;
+  }
+  .banner h1 { font-size: 1.3rem !important; }
+  .grid-section {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content { padding: 12px !important; }
+  .banner h1 { font-size: 1.15rem !important; }
+}
+
+
+/* ── 24. PRINT ─────────────────────────────────────────────── */
+@media print {
+  body  { background: #FFFFFF !important; }
+  .banner,
+  .admin-header { background: #58181F !important; -webkit-print-color-adjust: exact; }
+}
+
+
+/* ============================================================
+   ADDENDUM — Layout Container & Page-Specific Fixes
+   ============================================================ */
+
+/* ── A1. CONTENT MAX-WIDTH WRAPPER ───────────────────────────
+   The single most important layout fix.
+   Every page that uses .main-content gets its children
+   constrained to 1200px and centred.
+   This eliminates the "too-wide on large monitors" problem.
+   ─────────────────────────────────────────────────────────── */
+.main-content {
+  max-width: calc(var(--ds-sidebar-w) + 1200px);
+}
+
+/* Wrap the inner content — applied to ALL direct children
+   that are not the banner (banner already has its own max-width) */
+.main-content > .grid-section,
+.main-content > .stats-row,
+.main-content > .management-card,
+.main-content > .eh-page,
+.main-content > .calendar-container,
+.main-content > .engagement-container,
+.main-content > .inactive-container,
+.management-content > .admin-header,
+.management-content > .stats-row,
+.management-content > .management-card,
+.management-content > .quick-actions,
+.management-content > .recent-activity-grid,
+.management-content > .backup-grid {
+  max-width: 1200px;
+  width: 100%;
+}
+
+
+/* ── A2. MANAGEMENT CONTENT — admin pages ─────────────────── */
+.management-content {
+  padding: 32px !important;
+  background: var(--ds-bg-page) !important;
+}
+
+@media (max-width: 768px) {
+  .management-content { padding: 16px !important; }
+}
+
+@media (max-width: 480px) {
+  .management-content { padding: 12px !important; }
+}
+
+
+/* ── A3. BANNER — ensure it never goes wider than content ──── */
+.banner,
+.admin-header {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+
+/* ── A4. HOME PAGE QUICK-ACTION CARDS ─────────────────────── */
+/* The 3 cards on home.php need equal height and a bottom CTA */
+#home-cards .card,
+.grid-section .card {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-section .card a.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding: 10px 0 0;
+  color: var(--ds-maroon);
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  border-top: 1px solid var(--ds-border);
+}
+
+.grid-section .card a.card-cta:hover {
+  color: var(--ds-maroon-deep);
+  gap: 10px;
+}
+
+/* Existing <a> tags inside cards (home.php uses plain <a>) */
+.grid-section .card > a:last-child {
+  margin-top: auto;
+  color: var(--ds-maroon) !important;
+  font-weight: 600;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-border);
+  text-decoration: none;
+}
+
+.grid-section .card > a:last-child::after {
+  content: '→';
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.grid-section .card > a:last-child:hover::after {
+  transform: translateX(4px);
+}
+
+
+/* ── A5. EVENTS FILTER PILL — maroon not red ──────────────── */
+.events-filter-select {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(88,24,31,0.22) !important;
+}
+
+/* The chevron pseudo-element inside the wrapper */
+.events-filter-wrap::after {
+  border-top-color: #FFFFFF !important;
+}
+
+
+/* ── A6. QR BUTTON ─────────────────────────────────────────── */
+.qr-btn {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.qr-btn:hover {
+  background: linear-gradient(135deg, var(--ds-maroon-deep) 0%, #2A0810 100%) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── A7. TABLE HEAD — participant & engagement tables ────────
+   These pages define their own .participant-table / .role-members-table
+   with inline bg. We cover them here too.
+   ─────────────────────────────────────────────────────────── */
+.participant-table thead th,
+.role-members-table thead th {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── A8. SCAN QR PAGE ──────────────────────────────────────── */
+.action-toggle label {
+  background: var(--ds-bg-card) !important;
+  color: var(--ds-text-secondary) !important;
+  border: 1.5px solid var(--ds-border) !important;
+}
+
+.action-toggle input:checked + label {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+  border-color: var(--ds-maroon) !important;
+}
+
+
+/* ── A9. LOGOUT PAGE ───────────────────────────────────────── */
+.btn-logout {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-logout:hover {
+  background: linear-gradient(135deg, var(--ds-maroon-deep) 0%, #2A0810 100%) !important;
+}
+
+
+/* ── A10. MANAGE EVENTS HUB — quick action icon squares ───── */
+.action-icon-simple.primary,
+.action-icon-simple.secondary,
+.action-icon-simple.success,
+.action-icon-simple.warning,
+.action-icon-simple.info {
+  /* Keep the colourful icon squares — they are the 10% accent.
+     Just ensure the maroon variant matches the system. */
+}
+
+.action-icon-simple.primary {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+}
+
+
+/* ── A11. EVENT HEAD PAGE OVERRIDES ───────────────────────── */
+/* event_head.css uses --maroon which maps to #800020.
+   We re-map it to our system maroon #58181F for consistency. */
+.event-head-page,
+.event-head-page * {
+  --maroon:      var(--ds-maroon)      !important;
+  --dark-maroon: var(--ds-maroon-deep) !important;
+  --light-maroon:var(--ds-maroon-mid)  !important;
+}
+
+
+/* ── A12. CONFIRM / DELETE MODALS ─────────────────────────── */
+.btn-confirm-delete {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;   /* white text on solid red */
+  border: none !important;
+}
+
+.btn-confirm-delete:hover {
+  background: #B91C1C !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── A13. LANDING PAGE — event cards & nav CTA ────────────── */
+.event-register-btn,
+.btn-primary.event-register-btn {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.nav-cta {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── A14. PAGINATION ───────────────────────────────────────── */
+.pagination .active {
+  background: var(--ds-maroon) !important;
+  color: #FFFFFF !important;
+  border-color: var(--ds-maroon) !important;
+}
+
+.pagination a:hover {
+  border-color: var(--ds-maroon) !important;
+  color: var(--ds-maroon) !important;
+}
+
+
+/* ── A15. BACK / ATTENDANCE LINKS ─────────────────────────── */
+.back-link {
+  background: var(--ds-maroon-light) !important;
+  color: var(--ds-maroon) !important;
+}
+
+.back-link:hover {
+  background: var(--ds-maroon-tint) !important;
+  color: var(--ds-maroon-deep) !important;
+}
+
+.attendance-link {
+  background: linear-gradient(135deg, var(--ds-maroon) 0%, var(--ds-maroon-deep) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+
+/* ── A16. RECENT ACTIVITY GRID — admin dashboard ──────────── */
+.recent-activity-grid {
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .recent-activity-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+
+
+/* ── A17. EMPTY STATE ICONS ────────────────────────────────── */
+.empty-state i,
+.eh-empty i,
+.results-empty svg {
+  color: var(--ds-border-strong) !important;
+  opacity: 0.5;
+}

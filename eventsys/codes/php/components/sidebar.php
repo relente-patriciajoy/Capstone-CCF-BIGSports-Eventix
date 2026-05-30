@@ -13,10 +13,13 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <aside class="sidebar <?= $sidebar_class ?>" id="<?= $sidebar_id ?>">
-    <h2 class="logo">Eventix</h2>
+
+    <!-- Profile card replaces the old Eventix logo -->
+    <?php include('sidebar_profile_card.php'); ?>
 
     <button class="sidebar-close" id="closeSidebarBtn" aria-label="Close menu">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
@@ -33,9 +36,7 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
             <i data-lucide="user-check"></i> My Events
         </a>
         <?php
-        // Show Volunteer Events link only if user has volunteered
         if (isset($conn) && isset($_SESSION['user_id'])) {
-            // Total count (to show/hide the link)
             $vol_check = $conn->prepare("
                 SELECT COUNT(*) as c FROM volunteer_member vm
                 JOIN volunteer_role_type vrt ON vm.role_type_id = vrt.role_type_id
@@ -45,14 +46,14 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
             $vol_check->execute();
             $vol_count = $vol_check->get_result()->fetch_assoc()['c'];
             $vol_check->close();
-
             if ($vol_count > 0):
-
         ?>
-        <a href="../dashboard/my_volunteer_events.php" class="<?= $current_page === 'my_volunteer_events.php' ? 'active' : '' ?>">
+        <a href="../dashboard/my_volunteer_events.php"
+           class="<?= $current_page === 'my_volunteer_events.php' ? 'active' : '' ?>">
             <i data-lucide="users"></i> My Volunteer Events
         </a>
         <?php endif; } ?>
+
         <a href="../dashboard/attendance.php" class="<?= $current_page === 'attendance.php' ? 'active' : '' ?>">
             <i data-lucide="clipboard-check"></i> Attendance
         </a>
@@ -62,19 +63,12 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
 
         <?php if (isset($role) && $role === 'event_head'): ?>
         <a href="../event/manage_events.php" class="<?= in_array($current_page, [
-            'manage_events.php', 'scan_qr.php', 'view_attendance.php',
-            'reports.php', 'participant_engagement.php', 'inactive_tracking.php',
-            'announcement.php'
+            'manage_events.php','scan_qr.php','view_attendance.php',
+            'reports.php','participant_engagement.php','inactive_tracking.php','announcement.php'
         ]) ? 'active' : '' ?>">
             <i data-lucide="layout-dashboard"></i> Event Management
         </a>
-
         <?php endif; ?>
-
-        <div class="user-info-minimal">
-            <p class="user-name-text"><?= htmlspecialchars($_SESSION['first_name'] ?? 'User') ?> <?= htmlspecialchars($_SESSION['last_name'] ?? '') ?></p>
-            <p class="user-role-text"><?= $role === 'event_head' ? 'Event Head' : 'Participant' ?></p>
-        </div>
 
         <a href="../auth/logout.php?return=<?= urlencode($_SERVER['REQUEST_URI']) ?>">
             <i data-lucide="log-out"></i> Logout
@@ -84,28 +78,33 @@ $sidebar_id    = ($role === 'event_head') ? 'eventheadSidebar' : 'participantSid
 
 <script>
 (function() {
-    const hamburgerBtn  = document.getElementById('hamburgerBtn');
+    const hamburgerBtn    = document.getElementById('hamburgerBtn');
     const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-    const sidebar  = document.getElementById('<?= $sidebar_id ?>');
-    const overlay  = document.getElementById('sidebarOverlay');
-    const body     = document.body;
+    const sidebar         = document.getElementById('<?= $sidebar_id ?>');
+    const overlay         = document.getElementById('sidebarOverlay');
+    const body            = document.body;
 
-    function openSidebar()  { sidebar.classList.add('mobile-open'); overlay.classList.add('active'); body.style.overflow = 'hidden'; hamburgerBtn.classList.add('active'); }
-    function closeSidebar() { sidebar.classList.remove('mobile-open'); overlay.classList.remove('active'); body.style.overflow = ''; hamburgerBtn.classList.remove('active'); }
+    function openSidebar()  { sidebar.classList.add('mobile-open'); overlay.classList.add('active'); body.style.overflow='hidden'; hamburgerBtn.classList.add('active'); }
+    function closeSidebar() { sidebar.classList.remove('mobile-open'); overlay.classList.remove('active'); body.style.overflow=''; hamburgerBtn.classList.remove('active'); }
     function toggleSidebar(){ sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar(); }
 
-    if (hamburgerBtn)   hamburgerBtn.addEventListener('click', toggleSidebar);
+    if (hamburgerBtn)    hamburgerBtn.addEventListener('click', toggleSidebar);
     if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
-    if (overlay)        overlay.addEventListener('click', closeSidebar);
+    if (overlay)         overlay.addEventListener('click', closeSidebar);
 
     sidebar.querySelectorAll('nav a').forEach(link => {
         link.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
     });
 
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) closeSidebar(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) closeSidebar();
+    });
 
     let resizeTimer;
-    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (window.innerWidth > 768) closeSidebar(); }, 250); });
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if (window.innerWidth > 768) closeSidebar(); }, 250);
+    });
 })();
 
 if (typeof lucide !== 'undefined') lucide.createIcons();

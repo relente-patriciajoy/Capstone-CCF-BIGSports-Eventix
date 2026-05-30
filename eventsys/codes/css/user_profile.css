@@ -1,0 +1,466 @@
+/* ============================================
+   USER PROFILE PAGE STYLES
+   user_profile.css
+   ============================================ */
+
+/* ── Page wrapper ── */
+.profile-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+}
+
+/* ── Hero banner ── */
+.profile-hero {
+    background: linear-gradient(135deg, #800020 0%, #5a0016 100%);
+    border-radius: 20px;
+    padding: 36px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+}
+
+.profile-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 30%;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 1px;
+}
+
+.profile-hero-info {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.profile-hero-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.profile-hero-email {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+
+.profile-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-hero-badge svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* ── Alert banners ── */
+.profile-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.profile-alert svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.profile-alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.profile-alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* ── Cards ── */
+.profile-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.profile-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #800020;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #fef2f2;
+}
+
+.profile-card-title svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.profile-card-title .title-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 400;
+    margin-left: auto;
+}
+
+/* ── Form grid ── */
+.profile-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.profile-form-row.full  { grid-template-columns: 1fr; }
+.profile-form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+.profile-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.profile-form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.profile-form-group label .req {
+    color: #800020;
+    margin-left: 2px;
+}
+
+.profile-form-group input,
+.profile-form-group select {
+    padding: 11px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    background: #fafafa;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-form-group input:focus,
+.profile-form-group select:focus {
+    outline: none;
+    border-color: #800020;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.08);
+}
+
+.profile-form-group input:disabled,
+.profile-form-group select:disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+}
+
+.field-hint {
+    font-size: 0.76rem;
+    color: #6b7280;
+}
+
+/* ── Email lock note ── */
+.email-lock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: #6b7280;
+}
+
+.email-lock svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+}
+
+/* ── Gender toggle ── */
+.gender-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.gender-option {
+    position: relative;
+}
+
+.gender-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.gender-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    background: #fafafa;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.gender-option label svg {
+    width: 15px;
+    height: 15px;
+}
+
+.gender-option input:checked + label {
+    border-color: #800020;
+    background: #fff0f2;
+    color: #800020;
+}
+
+/* ── D-Group toggle ── */
+.dgroup-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #fafafa;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dgroup-toggle.checked {
+    border-color: #800020;
+    background: #fff0f2;
+}
+
+.dgroup-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #800020;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.dgroup-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.dgroup-sublabel {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* ── Password eye toggle ── */
+.input-eye {
+    position: relative;
+}
+
+.input-eye input {
+    padding-right: 44px;
+}
+
+.eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.eye-btn:hover { color: #800020; }
+
+.eye-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ── Save button ── */
+.profile-save-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #800020 0%, #5a0016 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(128, 0, 32, 0.3);
+    margin-top: 8px;
+}
+
+.profile-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(128, 0, 32, 0.4);
+}
+
+.profile-save-btn:active { transform: translateY(0); }
+
+.profile-save-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ============================================
+   RESPONSIVE — MOBILE FIRST
+   ============================================ */
+
+/* Small phone (< 375px) */
+@media (max-width: 374px) {
+    .profile-page       { padding: 12px 10px 60px; }
+    .profile-hero       { padding: 20px 16px; gap: 14px; }
+    .profile-avatar     { width: 56px; height: 56px; font-size: 1.2rem; }
+    .profile-hero-name  { font-size: 1.1rem; }
+    .profile-card       { padding: 16px 14px; }
+    .profile-form-row,
+    .profile-form-row.three { grid-template-columns: 1fr; }
+    .gender-toggle      { grid-template-columns: 1fr; }
+    .profile-save-btn   { font-size: 0.9rem; padding: 12px; }
+}
+
+/* Mobile (375px – 599px) */
+@media (max-width: 599px) {
+    .profile-page       { padding: 16px 14px 60px; }
+    .profile-hero       { flex-direction: column; text-align: center; padding: 28px 20px; }
+    .profile-hero-info  { width: 100%; }
+    .profile-form-row,
+    .profile-form-row.three { grid-template-columns: 1fr; }
+    .profile-card       { padding: 20px 16px; }
+}
+
+/* Tablet (600px – 1023px) */
+@media (min-width: 600px) and (max-width: 1023px) {
+    .profile-page           { padding: 24px 20px 60px; }
+    .profile-form-row.three { grid-template-columns: 1fr 1fr; }
+}
+
+/* Tablet with hamburger offset (768px – 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .profile-page { padding: 28px 24px 60px; }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .profile-page { padding: 36px 32px 80px; }
+    .profile-form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* Large desktop (1440px+) */
+@media (min-width: 1440px) {
+    .profile-page { padding: 40px 40px 80px; }
+}
+
+/* Touch devices — bigger tap targets */
+@media (hover: none) and (pointer: coarse) {
+    .profile-form-group input,
+    .profile-form-group select { font-size: 16px !important; min-height: 44px; }
+    .profile-save-btn           { min-height: 52px; }
+    .gender-option label        { min-height: 44px; }
+    .dgroup-toggle              { min-height: 52px; }
+}
+
+/* PWA safe areas */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .profile-page {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}

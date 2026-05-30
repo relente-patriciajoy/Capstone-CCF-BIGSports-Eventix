@@ -31,32 +31,10 @@ $stmt->close();
   <link rel="stylesheet" href="../../css/sidebar.css">
   <?php if ($role === 'event_head'): ?>
   <link rel="stylesheet" href="../../css/event_head.css">
+  <link rel="stylesheet" href="../../css/eventix-design-system.css">
   <?php endif; ?>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    /* ── Dashboard card links — always visible, red, with arrow ── */
-    .grid-section .card a {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 16px;
-        color: #e63946;
-        font-weight: 600;
-        font-size: 0.9rem;
-        text-decoration: none;
-        transition: color 0.2s, gap 0.2s;
-    }
-    .grid-section .card a::after {
-        content: ' →';
-        display: inline-block;
-        transition: transform 0.2s;
-    }
-    .grid-section .card a:hover {
-        color: #c72c3a;
-        gap: 10px;
-    }
-  </style>
 </head>
 
 <body class="dashboard-layout <?= $role === 'event_head' ? 'event-head-page' : '' ?>">
